@@ -117,7 +117,12 @@ new Vue({
                 this.currentQuestion = {
                     ...question,
                     typeText: this.getTypeText(question.type),
-                    difficultyText: this.getDifficultyText(question.difficulty)
+                    difficultyText: this.getDifficultyText(question.difficulty),
+                    // 直接使用 resource 字段
+                    resource: question.resource || '',
+                    question: question.question || '',
+                    options: question.options ? question.options.map(opt => opt || '') : ['', '', '', ''],
+                    analysis: question.analysis || ''
                 };
 
                 if (mode === 'practice') {
@@ -224,7 +229,12 @@ new Vue({
             this.currentQuestion = {
                 ...question,
                 typeText: this.getTypeText(question.type),
-                difficultyText: this.getDifficultyText(question.difficulty)
+                difficultyText: this.getDifficultyText(question.difficulty),
+                // 直接使用 resource 字段
+                resource: question.resource || '',
+                question: question.question || '',
+                options: question.options ? question.options.map(opt => opt || '') : ['', '', '', ''],
+                analysis: question.analysis || ''
             };
             this.selectedOption = null;
             this.showAnswer = false;
