@@ -246,7 +246,7 @@ body {
 /* 添加题源样式 */
 .question-source {
     background: linear-gradient(135deg, var(--secondary-color), #26C6DA);
-    color: white;
+    color: rgb(136, 118, 118);
     padding: 12px 20px;
     border-radius: var(--border-radius);
     margin-bottom: 25px;
@@ -612,3 +612,4 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary-dark);
 }
+
