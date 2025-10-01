@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博士业务能力考核</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <!-- 移动端菜单切换按钮 -->
+        <button class="mobile-menu-toggle" @click="toggleSidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- 侧边导航 -->
+        <div class="sidebar" :class="{ active: sidebarOpen }">
+            <div class="sidebar-header">
+                <h1>博士考核系统</h1>
+                <p>业务能力评估平台</p>
+            </div>
+
+            <div class="nav-menu">
+                <div class="nav-item" :class="{ active: currentPage === 'index' }" @click="goToPage('index')">
+                    <i class="fas fa-home"></i>
+                    <span>首页概览</span>
+                </div>
+
+                <div class="nav-item" :class="{ active: currentPage === 'practice' }" @click="goToPage('practice')">
+                    <i class="fas fa-book-open"></i>
+                    <span>题库练习</span>
+                </div>
+
+                <div class="nav-item" :class="{ active: currentPage === 'random' }" @click="goToPage('random')">
+                    <i class="fas fa-random"></i>
+                    <span>随机跳题</span>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <p>博士考核系统 v2.0</p>
+                <p>© 2023 罗德岛制药</p>
+            </div>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <!-- 首页 -->
+            <div v-if="currentPage === 'index'">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">博士业务能力考核</h1>
+                        <p class="page-subtitle">欢迎回来，博士。请选择您要进行的考核类型。</p>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-card" @click="goToPage('practice')">
+                        <div class="card-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <h3 class="card-title">题库练习</h3>
+                        <p class="card-description">按照类型或难度分类进行针对性练习，巩固知识点。</p>
+
+                    </div>
+
+                    <div class="dashboard-card" @click="goToPage('random')">
+                        <div class="card-icon">
+                            <i class="fas fa-random"></i>
+                        </div>
+                        <h3 class="card-title">随机跳题</h3>
+                        <p class="card-description">随机抽取题目进行练习，检验综合能力。</p>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- 题库练习页面 -->
+            <div v-if="currentPage === 'practice'">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">题库练习</h1>
+                        <p class="page-subtitle">选择分类方式并开始练习</p>
+                    </div>
+                    <button class="back-btn" @click="goToPage('index')">
+                        <i class="fas fa-arrow-left"></i> 返回首页
+                    </button>
+                </div>
+
+                <div class="mode-selector">
+                    <div class="mode-option" :class="{ active: practiceMode === 'type' }"
+                        @click="practiceMode = 'type'">
+                        按类型分类
+                    </div>
+                    <div class="mode-option" :class="{ active: practiceMode === 'difficulty' }"
+                        @click="practiceMode = 'difficulty'">
+                        按难度分类
+                    </div>
+                </div>
+
+                <div class="categories-container">
+                    <div class="category-card" v-for="(category, key) in categories" :key="key">
+                        <div class="category-header" @click="toggleCategory(key)">
+                            <div class="category-title">{{ category.name }}</div>
+                            <div class="category-count">{{ category.questions.length }} 题</div>
+                        </div>
+
+                        <div class="questions-grid" v-show="category.isOpen">
+                            <div class="question-item" v-for="question in category.questions" :key="question.id"
+                                @click="goToQuestion(question.id, 'practice')">
+                                {{ question.id }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 随机跳题页面 -->
+            <div v-if="currentPage === 'random'">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">随机跳题</h1>
+                        <p class="page-subtitle">随机抽取题目进行综合练习</p>
+                    </div>
+                    <button class="back-btn" @click="goToPage('index')">
+                        <i class="fas fa-arrow-left"></i> 返回首页
+                    </button>
+                </div>
+
+                <div class="dashboard-card" style="text-align: center; padding: 60px 40px;">
+                    <div class="card-icon" style="margin: 0 auto 30px;">
+                        <i class="fas fa-random"></i>
+                    </div>
+                    <h3 class="card-title">开始随机练习</h3>
+                    <p class="card-description">系统将从题库中随机抽取题目，检验您的综合能力。</p>
+                    <button class="nav-btn primary" style="margin: 30px auto 0; padding: 16px 40px; font-size: 1.1rem;"
+                        @click="startRandom">
+                        <i class="fas fa-play"></i> 开始随机练习
+                    </button>
+                </div>
+            </div>
+
+            <!-- 答题页面 -->
+            <div v-if="currentPage === 'question'" class="question-container">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">答题</h1>
+                        <p class="page-subtitle">认真阅读题目并选择正确答案</p>
+                    </div>
+                    <button class="back-btn" @click="goBackFromQuestion">
+                        <i class="fas fa-arrow-left"></i> 返回
+                    </button>
+                </div>
+
+                <div class="question-card">
+                    <div class="question-meta">
+                        <div class="meta-tag">
+                            <i class="fas fa-hashtag"></i> 题目ID: {{ currentQuestion.id }}
+                        </div>
+                        <div class="meta-tag">
+                            <i class="fas fa-tag"></i> 类型: {{ currentQuestion.typeText }}
+                        </div>
+                        <div class="meta-tag">
+                            <i class="fas fa-star"></i> 难度: {{ currentQuestion.difficultyText }}
+                        </div>
+                    </div>
+
+                    <div class="question-text">
+                        <p>{{ currentQuestion.question }}</p>
+                        <img v-if="currentQuestion.picture" :src="'./images/' + currentQuestion.id + '.png'"
+                            :alt="'题目' + currentQuestion.id + '图片'"
+                            style="max-width: 100%; margin-top: 20px; border-radius: 8px;">
+                    </div>
+
+                    <div class="options-container">
+                        <div v-for="(option, index) in currentQuestion.options" :key="index" :class="['option', {
+                                 'selected': selectedOption === index + 1,
+                                 'correct': showAnswer && index + 1 === currentQuestion.answer,
+                                 'wrong': showAnswer && selectedOption === index + 1 && selectedOption !== currentQuestion.answer
+                             }]" @click="selectOption(index + 1)">
+                            <span class="option-label">{{ String.fromCharCode(65 + index) }}</span>
+                            <span class="option-text">{{ option }}</span>
+                        </div>
+                    </div>
+
+                    <div class="navigation-buttons">
+                        <button class="nav-btn secondary" @click="prevQuestion" :disabled="!hasPrevQuestion">
+                            <i class="fas fa-arrow-left"></i> 上一题
+                        </button>
+
+                        <button class="nav-btn primary" @click="checkAnswer" v-if="!showAnswer">
+                            <i class="fas fa-check"></i> 提交答案
+                        </button>
+
+                        <button class="nav-btn primary" @click="nextQuestion" :disabled="!hasNextQuestion">
+                            下一题 <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="question-card" v-if="showAnswer">
+                    <h3 style="margin-bottom: 20px; color: var(--success-color);">
+                        <i class="fas fa-lightbulb"></i> 答案解析
+                    </h3>
+                    <p><strong>正确答案: {{ String.fromCharCode(64 + currentQuestion.answer) }}</strong></p>
+                    <p style="margin-top: 15px;">{{ currentQuestion.analysis }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入题目数据 -->
+    <script src="js/questions.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
