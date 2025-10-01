@@ -173,9 +173,12 @@
                             <i class="fas fa-star"></i> 难度: {{ currentQuestion.difficultyText }}
                         </div>
                     </div>
+                    <div class="question-source" v-if="currentQuestion.resource">
+                        <i class="fas fa-map-marker-alt"></i> 题源: {{ currentQuestion.resource }}
+                    </div>
 
                     <div class="question-text">
-                        <p>{{ currentQuestion.question }}</p>
+                        <p v-html="currentQuestion.question"></p>
                         <img v-if="currentQuestion.picture" :src="'./images/' + currentQuestion.id + '.png'"
                             :alt="'题目' + currentQuestion.id + '图片'"
                             style="max-width: 100%; margin-top: 20px; border-radius: 8px;">
@@ -183,12 +186,12 @@
 
                     <div class="options-container">
                         <div v-for="(option, index) in currentQuestion.options" :key="index" :class="['option', {
-                                 'selected': selectedOption === index + 1,
-                                 'correct': showAnswer && index + 1 === currentQuestion.answer,
-                                 'wrong': showAnswer && selectedOption === index + 1 && selectedOption !== currentQuestion.answer
-                             }]" @click="selectOption(index + 1)">
+                                    'selected': selectedOption === index + 1,
+                                    'correct': showAnswer && index + 1 === currentQuestion.answer,
+                                    'wrong': showAnswer && selectedOption === index + 1 && selectedOption !== currentQuestion.answer
+                                }]" @click="selectOption(index + 1)">
                             <span class="option-label">{{ String.fromCharCode(65 + index) }}</span>
-                            <span class="option-text">{{ option }}</span>
+                            <span class="option-text" v-html="option"></span>
                         </div>
                     </div>
 
@@ -212,7 +215,7 @@
                         <i class="fas fa-lightbulb"></i> 答案解析
                     </h3>
                     <p><strong>正确答案: {{ String.fromCharCode(64 + currentQuestion.answer) }}</strong></p>
-                    <p style="margin-top: 15px;">{{ currentQuestion.analysis }}</p>
+                    <p style="margin-top: 15px;" v-html="currentQuestion.analysis"></p>
                 </div>
             </div>
         </div>
