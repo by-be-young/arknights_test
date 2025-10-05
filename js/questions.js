@@ -306,7 +306,7 @@ window.questions = [
     {
         "id": 20,
         "type": 2,
-        "difficulty": 1,
+        "difficulty": 2,
         "resource": "仙术杯常见操作",
         "question": "弑君者你怎么黑白两道都是飞舞啊！！（对不起君君你是合约超大杯）<br>下图是萨卡兹肉鸽一层关卡《夺路而跳》。你现在只招募了干员：精一苏苏洛、精一古米、精一逻各斯。则古米放在图中哪个位置将是最佳选择？",
         "picture": true,
@@ -720,3 +720,4 @@ window.questions = [
         "analysis": "A、总伤约6w<br>B、总伤约8w<br>C、总伤约4w<br>D、中心点距离两格时，收回投射物时也能对岁造成伤害，总伤约12w"
     }
 ];
+
