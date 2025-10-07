@@ -2,20 +2,38 @@
 class AuthManager {
     constructor() {
         this.currentUser = null;
-        this.init();
+        this.isInitialized = false;
     }
 
     async init() {
-        // 检查当前会话
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            this.currentUser = session.user;
-            await this.loadUserProfile();
+        if (this.isInitialized) return;
+
+        const supabase = window.getSupabase();
+        if (!supabase) {
+            console.log('等待 Supabase 初始化...');
+            setTimeout(() => this.init(), 100);
+            return;
         }
-        this.updateUI();
+
+        try {
+            // 检查当前会话
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error) throw error;
+
+            if (session) {
+                this.currentUser = session.user;
+                await this.loadUserProfile();
+            }
+            this.updateUI();
+            this.isInitialized = true;
+            console.log('认证管理器初始化完成');
+        } catch (error) {
+            console.error('认证初始化失败:', error);
+        }
     }
 
     async loadUserProfile() {
+        const supabase = window.getSupabase();
         const { data, error } = await supabase
             .from('users')
             .select('*')
@@ -24,36 +42,42 @@ class AuthManager {
 
         if (data && !error) {
             this.currentUser.profile = data;
+        } else if (error) {
+            console.error('加载用户资料失败:', error);
         }
     }
 
     async register(username, password) {
         try {
+            const supabase = window.getSupabase();
+
             // 首先检查用户名是否已存在
-            const { data: existingUser } = await supabase
+            const { data: existingUser, error: checkError } = await supabase
                 .from('users')
                 .select('id')
                 .eq('username', username)
                 .single();
 
-            if (existingUser) {
+            if (existingUser && !checkError) {
                 throw new Error('用户名已存在');
             }
 
-            // 注册用户
+            // 使用邮箱格式注册（Supabase 要求邮箱）
+            const email = `${username}@qq.com`;
+
             const { data: authData, error: authError } = await supabase.auth.signUp({
-                email: `${username}@doctor-assessment.com`, // 使用虚拟邮箱
+                email: email,
                 password: password,
             });
 
             if (authError) throw authError;
 
             // 检查是否是第一个用户（管理员）
-            const { data: userCount } = await supabase
+            const { data: userCount, error: countError } = await supabase
                 .from('users')
                 .select('id', { count: 'exact' });
 
-            const isAdmin = userCount.length === 0;
+            const isAdmin = !countError && userCount.length === 0;
 
             // 创建用户资料
             const { error: profileError } = await supabase
@@ -67,22 +91,37 @@ class AuthManager {
                     }
                 ]);
 
-            if (profileError) throw profileError;
+            if (profileError) {
+                // 如果创建资料失败，删除认证用户
+                await supabase.auth.admin.deleteUser(authData.user.id);
+                throw profileError;
+            }
 
             this.currentUser = authData.user;
             await this.loadUserProfile();
             this.updateUI();
 
-            return { success: true, message: '注册成功' + (isAdmin ? '，您已成为管理员' : '') };
+            return {
+                success: true,
+                message: '注册成功' + (isAdmin ? '，您已成为管理员' : ''),
+                isAdmin: isAdmin
+            };
         } catch (error) {
-            return { success: false, message: error.message };
+            console.error('注册失败:', error);
+            return {
+                success: false,
+                message: error.message || '注册失败，请重试'
+            };
         }
     }
 
     async login(username, password) {
         try {
+            const supabase = window.getSupabase();
+            const email = `${username}@qq.com`;
+
             const { data, error } = await supabase.auth.signInWithPassword({
-                email: `${username}@doctor-assessment.com`,
+                email: email,
                 password: password
             });
 
@@ -94,11 +133,16 @@ class AuthManager {
 
             return { success: true };
         } catch (error) {
-            return { success: false, message: '用户名或密码错误' };
+            console.error('登录失败:', error);
+            return {
+                success: false,
+                message: error.message || '用户名或密码错误'
+            };
         }
     }
 
     async logout() {
+        const supabase = window.getSupabase();
         await supabase.auth.signOut();
         this.currentUser = null;
         this.updateUI();
@@ -112,39 +156,53 @@ class AuthManager {
         return this.currentUser && this.currentUser.profile && this.currentUser.profile.is_admin;
     }
 
+    getUsername() {
+        return this.currentUser?.profile?.username || '用户';
+    }
+
     updateUI() {
-        const authElements = document.querySelectorAll('.auth-only');
-        const unauthElements = document.querySelectorAll('.unauth-only');
-        const adminElements = document.querySelectorAll('.admin-only');
+        // 给 Vue 一点时间来更新DOM
+        setTimeout(() => {
+            const authElements = document.querySelectorAll('.auth-only');
+            const unauthElements = document.querySelectorAll('.unauth-only');
+            const adminElements = document.querySelectorAll('.admin-only');
 
-        if (this.isLoggedIn()) {
-            authElements.forEach(el => el.style.display = 'block');
-            unauthElements.forEach(el => el.style.display = 'none');
+            if (this.isLoggedIn()) {
+                authElements.forEach(el => el.style.display = 'block');
+                unauthElements.forEach(el => el.style.display = 'none');
 
-            if (this.isAdmin()) {
-                adminElements.forEach(el => el.style.display = 'block');
+                if (this.isAdmin()) {
+                    adminElements.forEach(el => el.style.display = 'block');
+                } else {
+                    adminElements.forEach(el => el.style.display = 'none');
+                }
+
+                // 更新用户信息显示
+                const userInfoElements = document.querySelectorAll('.user-info');
+                userInfoElements.forEach(el => {
+                    el.innerHTML = `
+                        <div class="user-avatar">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <span>${this.getUsername()}</span>
+                        ${this.isAdmin() ? '<span class="admin-badge" style="background: #FF7043; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; margin-left: 8px;">管理员</span>' : ''}
+                    `;
+                });
             } else {
+                authElements.forEach(el => el.style.display = 'none');
+                unauthElements.forEach(el => el.style.display = 'block');
                 adminElements.forEach(el => el.style.display = 'none');
             }
-
-            // 更新用户信息显示
-            const userInfoElements = document.querySelectorAll('.user-info');
-            userInfoElements.forEach(el => {
-                el.innerHTML = `
-                    <div class="user-avatar">
-                        <i class="fas fa-user-md"></i>
-                    </div>
-                    <span>${this.currentUser.profile.username}</span>
-                    ${this.isAdmin() ? '<span class="admin-badge">管理员</span>' : ''}
-                `;
-            });
-        } else {
-            authElements.forEach(el => el.style.display = 'none');
-            unauthElements.forEach(el => el.style.display = 'block');
-            adminElements.forEach(el => el.style.display = 'none');
-        }
+        }, 100);
     }
 }
 
 // 创建全局认证管理器实例
 window.authManager = new AuthManager();
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(() => {
+        window.authManager.init();
+    }, 500);
+});
