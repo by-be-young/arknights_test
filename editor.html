@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>题目编辑器 - 博士业务能力考核</title>
+    <link rel="stylesheet" href="css/editor.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+</head>
+
+<body>
+    <div id="editor-app">
+        <div class="editor-container">
+            <header>
+                <h1>题目编辑器</h1>
+                <div class="editor-actions">
+                    <button @click="addQuestion" class="btn btn-primary">添加题目</button>
+                    <button @click="exportQuestions" class="btn btn-success">导出全部到剪贴板</button>
+                    <button @click="syncToSupabase" :disabled="syncing" class="btn btn-primary">
+                        <span v-if="syncing">同步中...</span>
+                        <span v-else>同步到 Supabase</span>
+                    </button>
+                    <button @click="exportQuestionsFromId" class="btn btn-warning">批量导出题目</button>
+                    <button @click="importQuestions" class="btn btn-info">从剪贴板导入</button>
+                    <button @click="clearAll" class="btn btn-danger">清空所有</button>
+                </div>
+            </header>
+
+            <div class="editor-content">
+                <aside class="sidebar" :class="{ 'collapsed': sidebarCollapsed }">
+                    <div class="sidebar-header">
+                        <h3>题目列表</h3>
+                        <button @click="toggleSidebar" class="btn btn-sm btn-secondary">
+                            {{ sidebarCollapsed ? '展开' : '收起' }}
+                        </button>
+                    </div>
+                    <div class="questions-nav" v-if="!sidebarCollapsed">
+                        <div v-for="(question, index) in questions" :key="question.id" class="nav-item"
+                            :class="{ 'active': currentQuestionIndex === index }" @click="scrollToQuestion(index)">
+                            <span class="question-id">题目 {{ question.id }}</span>
+                            <span class="question-type">{{ getTypeName(question.type) }}</span>
+                        </div>
+                    </div>
+                </aside>
+
+                <main class="questions-list">
+                    <div v-for="(question, index) in questions" :key="question.id" class="question-editor"
+                        :id="'question-' + question.id">
+                        <div class="question-header">
+                            <h3>题目 {{ question.id }}</h3>
+                            <div>
+                                <button @click="exportSingleQuestion(index)"
+                                    class="btn btn-success btn-sm">导出本题</button>
+                                <button @click="removeQuestion(index)" class="btn btn-danger btn-sm">删除</button>
+                            </div>
+                        </div>
+
+                        <div class="question-form">
+                            <div class="form-group">
+                                <label>ID:</label>
+                                <input type="number" v-model.number="question.id" min="1">
+                            </div>
+
+                            <div class="form-group">
+                                <label>类型:</label>
+                                <select v-model.number="question.type">
+                                    <option value="1">干员调配与特性化决策</option>
+                                    <option value="2">空间部署与极致化战术</option>
+                                    <option value="3">效能审计与生态位界定</option>
+                                    <option value="4">横向分析与竞争力评估</option>
+                                    <option value="5">作战环境与档案类记录</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>难度:</label>
+                                <select v-model.number="question.difficulty">
+                                    <option value="1">常识</option>
+                                    <option value="2">基操</option>
+                                    <option value="3">娴熟</option>
+                                    <option value="4">明智</option>
+                                    <option value="5">深邃</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>题源:</label>
+                                <input type="text" v-model="question.resource">
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label>题目:</label>
+                                <textarea v-model="question.question" rows="3"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" v-model="question.picture"> 包含图片
+                                </label>
+                            </div>
+
+                            <div class="form-group full-width options-group">
+                                <label>选项:</label>
+                                <div v-for="(option, optIndex) in question.options" :key="optIndex"
+                                    class="option-input">
+                                    <label>{{ String.fromCharCode(65 + optIndex) }}:</label>
+                                    <input type="text" v-model="question.options[optIndex]">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>正确答案:</label>
+                                <select v-model.number="question.answer">
+                                    <option value="1">A</option>
+                                    <option value="2">B</option>
+                                    <option value="3">C</option>
+                                    <option value="4">D</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label>解析:</label>
+                                <textarea v-model="question.analysis" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="questions.length === 0" class="empty-state">
+                        <p>暂无题目，点击"添加题目"开始创建</p>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/editor.js"></script>
+</body>
+
+</html>
