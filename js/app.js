@@ -30,6 +30,7 @@ new Vue({
         wrongQuestions: [],
 
         // 后端相关
+        rawQuestions: [],
         showAuthModal: false,
         authMode: 'login',
         authUsername: '',
@@ -54,11 +55,11 @@ new Vue({
         },
         hasNextQuestion() {
             if (this.questionMode === 'practice') {
-                return this.currentQuestionIndex < window.questions.length - 1;
+                return this.currentQuestionIndex < this.rawQuestions.length - 1;
             } else if (this.questionMode === 'random') {
                 return true;
             } else if (this.questionMode === 'jump') {
-                return this.currentQuestion && this.currentQuestion.id < window.questions.length;
+                return this.currentQuestion && this.currentQuestion.id < this.rawQuestions.length;
             } else if (this.questionMode === 'training') {
                 return this.getNextTrainingQuestion() !== null;
             } else if (this.questionMode === 'wrong') {
@@ -74,7 +75,7 @@ new Vue({
         averageDifficulty() {
             if (this.wrongQuestions.length === 0) return 0;
             const sum = this.wrongQuestions.reduce((total, id) => {
-                const question = window.questions.find(q => q.id === id);
+                const question = this.rawQuestions.find(q => q.id === id);
                 return total + (question ? question.difficulty : 0);
             }, 0);
             return sum / this.wrongQuestions.length;
@@ -83,7 +84,7 @@ new Vue({
             if (this.wrongQuestions.length === 0) return '无';
             const typeCount = {};
             this.wrongQuestions.forEach(id => {
-                const question = window.questions.find(q => q.id === id);
+                const question = this.rawQuestions.find(q => q.id === id);
                 if (question) {
                     const typeText = this.getTypeText(question.type);
                     typeCount[typeText] = (typeCount[typeText] || 0) + 1;
@@ -99,13 +100,13 @@ new Vue({
             this.updateCategories();
         }
     },
-    mounted() {
+    async mounted() {
+        await this.loadQuestions();
         this.updateCategories();
         this.loadTrainingQuestions();
         this.loadTrainingRecords();
         this.loadWrongQuestions();
         this.loadSystemData();
-        this.loadQuestionStats();
         this.loadExamStats();
 
         // 点击侧边栏外部关闭侧边栏
@@ -123,6 +124,26 @@ new Vue({
         });
     },
     methods: {
+        /* 新增：统一拉题库 */
+        async loadQuestions() {
+            if (!window.dbManager) return
+            try {
+                this.rawQuestions = await window.dbManager.getQuestions()
+                // 如果其它文件也要用，继续挂到 window 供旧代码过渡
+                window.questions = this.rawQuestions
+            } catch (e) {
+                console.error('题库加载失败', e)
+                // 降级：仍然读取本地 questions.js（如有）
+                if (window.questions) this.rawQuestions = window.questions
+            }
+        },
+
+        fmtQuestion(str) {
+            return (str || '')
+                .replace(/\r\n/g, '\n')   // 统一换行符
+                .replace(/\n/g, '<br>');  // 转成浏览器可见换行
+        },
+
         toggleSidebar() {
             this.sidebarOpen = !this.sidebarOpen;
         },
@@ -141,6 +162,48 @@ new Vue({
             }
         },
 
+        goToEditor(type) {
+            const map = {
+                questions: 'editor.html',
+                training: 'training-editor.html'
+            };
+            window.open(map[type], '_blank');
+        },
+
+        // 获取题目统计信息
+        async loadQuestionStats(questionId, questionType) {
+            // 如果没有传递参数，使用当前题目的信息
+            if (!questionId && this.currentQuestion) {
+                questionId = this.currentQuestion.id;
+            }
+            if (!questionType) {
+                questionType = this.questionMode === 'training' ? 'training' : 'normal';
+            }
+
+            if (!window.dbManager || !questionId || !questionType) {
+                console.warn('无法加载题目统计: 缺少必要参数', { questionId, questionType });
+                return;
+            }
+
+            try {
+                console.log('加载题目统计:', { questionId, questionType });
+                this.questionStats = await dbManager.getQuestionStats(questionId, questionType);
+            } catch (error) {
+                console.error('加载题目统计失败:', error);
+            }
+        },
+
+        // 获取考试统计信息
+        async loadExamStats() {
+            if (!window.dbManager) return;
+
+            try {
+                this.examStats = await dbManager.getExamStats();
+            } catch (error) {
+                console.error('加载考试统计失败:', error);
+            }
+        },
+
         updateCategories() {
             const newCategories = {};
 
@@ -154,7 +217,7 @@ new Vue({
                 };
 
                 for (let i = 1; i <= 5; i++) {
-                    const questions = window.questions.filter(q => q.type === i);
+                    const questions = this.rawQuestions.filter(q => q.type === i);
                     newCategories[`type_${i}`] = {
                         name: typeNames[i],
                         questions: questions,
@@ -171,7 +234,7 @@ new Vue({
                 };
 
                 for (let i = 1; i <= 5; i++) {
-                    const questions = window.questions.filter(q => q.difficulty === i);
+                    const questions = this.rawQuestions.filter(q => q.difficulty === i);
                     newCategories[`difficulty_${i}`] = {
                         name: difficultyNames[i],
                         questions: questions,
@@ -194,7 +257,7 @@ new Vue({
             };
 
             for (let i = 1; i <= 5; i++) {
-                const questions = window.questions.filter(q =>
+                const questions = this.rawQuestions.filter(q =>
                     q.type === i && this.wrongQuestions.includes(q.id)
                 );
                 if (questions.length > 0) {
@@ -237,7 +300,7 @@ new Vue({
 
         goToQuestion(id, mode) {
             this.questionMode = mode;
-            const question = window.questions.find(q => q.id === id);
+            const question = this.rawQuestions.find(q => q.id === id);
             if (question) {
                 this.currentQuestion = {
                     ...question,
@@ -245,13 +308,13 @@ new Vue({
                     difficultyText: this.getDifficultyText(question.difficulty),
                     // 直接使用 resource 字段
                     resource: question.resource || '',
-                    question: question.question || '',
+                    question: this.fmtQuestion(question.question),
                     options: question.options ? question.options.map(opt => opt || '') : ['', '', '', ''],
-                    analysis: question.analysis || ''
+                    analysis: this.fmtQuestion(question.analysis)
                 };
 
                 if (mode === 'practice') {
-                    this.currentQuestionIndex = window.questions.findIndex(q => q.id === id);
+                    this.currentQuestionIndex = this.rawQuestions.findIndex(q => q.id === id);
                 } else if (mode === 'random') {
                     this.randomHistory.push(id);
                     this.randomCurrentIndex = this.randomHistory.length - 1;
@@ -272,9 +335,9 @@ new Vue({
                     typeText: '入职培训',
                     difficultyText: '入门',
                     resource: '',
-                    question: question.question || '',
+                    question: this.fmtQuestion(question.question),
                     options: question.options ? question.options.map(opt => opt || '') : ['', '', '', ''],
-                    analysis: question.analysis || '',
+                    analysis: this.fmtQuestion(question.analysis),
                     picture: question.picture || false
                 };
                 this.currentPage = 'question';
@@ -285,16 +348,16 @@ new Vue({
 
         goToWrongQuestion(id) {
             this.questionMode = 'wrong';
-            const question = window.questions.find(q => q.id === id);
+            const question = this.rawQuestions.find(q => q.id === id);
             if (question) {
                 this.currentQuestion = {
                     ...question,
                     typeText: this.getTypeText(question.type),
                     difficultyText: this.getDifficultyText(question.difficulty),
                     resource: question.resource || '',
-                    question: question.question || '',
+                    question: this.fmtQuestion(question.question),
                     options: question.options ? question.options.map(opt => opt || '') : ['', '', '', ''],
-                    analysis: question.analysis || ''
+                    analysis: this.fmtQuestion(question.analysis)
                 };
                 this.currentPage = 'question';
                 this.selectedOption = null;
@@ -358,16 +421,30 @@ new Vue({
             }
         },
 
-        checkAnswer() {
+        async checkAnswer() {
             if (this.selectedOption) {
                 this.showAnswer = true;
+
+                console.log('提交答案:', {
+                    questionId: this.currentQuestion.id,
+                    questionType: this.questionMode === 'training' ? 'training' : 'normal',
+                    selectedOption: this.selectedOption,
+                    isCorrect: this.isAnswerCorrect
+                });
 
                 // 记录答题结果
                 if (this.questionMode === 'training') {
                     this.recordTrainingAnswer(this.currentQuestion.id, this.isAnswerCorrect);
-                } else if (!this.isAnswerCorrect && this.questionMode !== 'training') {
-                    this.recordWrongAnswer(this.currentQuestion.id);
+                    await dbManager.recordAnswer(this.currentQuestion.id, 'training', this.isAnswerCorrect, this.selectedOption);
+                } else {
+                    if (!this.isAnswerCorrect) {
+                        this.recordWrongAnswer(this.currentQuestion.id);
+                    }
+                    await dbManager.recordAnswer(this.currentQuestion.id, 'normal', this.isAnswerCorrect, this.selectedOption);
                 }
+
+                // 只有在显示答案后才加载统计信息 - 传递正确的参数
+                await this.loadQuestionStats(this.currentQuestion.id, this.questionMode === 'training' ? 'training' : 'normal');
 
                 // 滚动到解析部分
                 this.$nextTick(() => {
@@ -378,6 +455,22 @@ new Vue({
                 });
             } else {
                 alert('请先选择一个答案');
+            }
+        },
+
+        goToEditor(type) {
+            const map = { questions: 'editor.html', training: 'training-editor.html' };
+            window.open(map[type], '_blank');
+        },
+
+        async loadExamStats() {
+            if (!window.authManager || !window.authManager.isLoggedIn()) return;
+
+            try {
+                const stats = await window.dbManager.getExamStats();
+                this.examStats = stats;
+            } catch (error) {
+                console.error('加载考试统计失败:', error);
             }
         },
 
@@ -419,14 +512,14 @@ new Vue({
 
                 if (this.practiceMode === 'type') {
                     // 相同类型下id大于本题的最小id
-                    const sameTypeQuestions = window.questions.filter(q => q.type === currentQuestion.type && q.id > currentQuestion.id);
+                    const sameTypeQuestions = this.rawQuestions.filter(q => q.type === currentQuestion.type && q.id > currentQuestion.id);
                     if (sameTypeQuestions.length > 0) {
                         nextQuestion = sameTypeQuestions[0];
                     } else {
                         // 找下一个类型的最小id
                         const nextType = currentQuestion.type + 1;
                         if (nextType <= 5) {
-                            const nextTypeQuestions = window.questions.filter(q => q.type === nextType);
+                            const nextTypeQuestions = this.rawQuestions.filter(q => q.type === nextType);
                             if (nextTypeQuestions.length > 0) {
                                 nextQuestion = nextTypeQuestions[0];
                             }
@@ -434,14 +527,14 @@ new Vue({
                     }
                 } else {
                     // 相同难度下id大于本题的最小id
-                    const sameDifficultyQuestions = window.questions.filter(q => q.difficulty === currentQuestion.difficulty && q.id > currentQuestion.id);
+                    const sameDifficultyQuestions = this.rawQuestions.filter(q => q.difficulty === currentQuestion.difficulty && q.id > currentQuestion.id);
                     if (sameDifficultyQuestions.length > 0) {
                         nextQuestion = sameDifficultyQuestions[0];
                     } else {
                         // 找下一个难度的最小id
                         const nextDifficulty = currentQuestion.difficulty + 1;
                         if (nextDifficulty <= 5) {
-                            const nextDifficultyQuestions = window.questions.filter(q => q.difficulty === nextDifficulty);
+                            const nextDifficultyQuestions = this.rawQuestions.filter(q => q.difficulty === nextDifficulty);
                             if (nextDifficultyQuestions.length > 0) {
                                 nextQuestion = nextDifficultyQuestions[0];
                             }
@@ -456,7 +549,7 @@ new Vue({
                 }
             } else if (this.questionMode === 'random') {
                 const doneQuestions = [...this.randomHistory];
-                const availableQuestions = window.questions.filter(
+                const availableQuestions = this.rawQuestions.filter(
                     q => !doneQuestions.includes(q.id)
                 );
 
@@ -470,7 +563,7 @@ new Vue({
                     alert('所有题目都已练习过！');
                 }
             } else if (this.questionMode === 'jump') {
-                if (this.currentQuestion && this.currentQuestion.id < window.questions.length) {
+                if (this.currentQuestion && this.currentQuestion.id < this.rawQuestions.length) {
                     const nextId = this.currentQuestion.id + 1;
                     this.loadQuestionById(nextId);
                 }
@@ -526,7 +619,7 @@ new Vue({
         },
 
         loadQuestionByIndex(index) {
-            const question = window.questions[index];
+            const question = this.rawQuestions[index];
             this.currentQuestion = {
                 ...question,
                 typeText: this.getTypeText(question.type),
@@ -537,7 +630,7 @@ new Vue({
         },
 
         loadQuestionById(id) {
-            const question = window.questions.find(q => q.id === id);
+            const question = this.rawQuestions.find(q => q.id === id);
             if (question) {
                 this.currentQuestion = {
                     ...question,
@@ -545,9 +638,9 @@ new Vue({
                     difficultyText: this.getDifficultyText(question.difficulty),
                     // 直接使用 resource 字段
                     resource: question.resource || '',
-                    question: question.question || '',
+                    question: this.fmtQuestion(question.question),
                     options: question.options ? question.options.map(opt => opt || '') : ['', '', '', ''],
-                    analysis: question.analysis || ''
+                    analysis: this.fmtQuestion(question.analysis)
                 };
                 this.selectedOption = null;
                 this.showAnswer = false;
@@ -573,8 +666,8 @@ new Vue({
         },
 
         startRandom() {
-            const randomIndex = Math.floor(Math.random() * window.questions.length);
-            const question = window.questions[randomIndex];
+            const randomIndex = Math.floor(Math.random() * this.rawQuestions.length);
+            const question = this.rawQuestions[randomIndex];
             this.questionMode = 'random';
             this.randomHistory = [question.id];
             this.randomCurrentIndex = 0;
@@ -599,7 +692,7 @@ new Vue({
             // 处理普通题号
             else {
                 const id = parseInt(input);
-                const total = window.questions ? window.questions.length : 0;
+                const total = this.rawQuestions ? this.rawQuestions.length : 0;
                 if (id >= 1 && id <= total) {
                     this.questionMode = 'jump';
                     this.loadQuestionById(id);
@@ -611,7 +704,7 @@ new Vue({
         },
 
         getTotalQuestions() {
-            return window.questions ? window.questions.length : 0;
+            return this.rawQuestions ? this.rawQuestions.length : 0;
         },
 
         startExam() {
@@ -696,7 +789,7 @@ new Vue({
 
         deleteWrongCategory(key) {
             const type = parseInt(key.split('_')[1]);
-            const questionsInCategory = window.questions.filter(q =>
+            const questionsInCategory = this.rawQuestions.filter(q =>
                 q.type === type && this.wrongQuestions.includes(q.id)
             );
 
@@ -733,12 +826,14 @@ new Vue({
 
         //==============后端相关=====================
 
+
         async handleLogin() {
             const result = await authManager.login(this.authUsername, this.authPassword);
             if (result.success) {
                 this.showAuthModal = false;
                 this.authUsername = '';
                 this.authPassword = '';
+                this.loadExamStats();
             } else {
                 alert(result.message);
             }
@@ -751,27 +846,25 @@ new Vue({
                 this.showAuthModal = false;
                 this.authUsername = '';
                 this.authPassword = '';
+                this.loadExamStats();
             } else {
                 alert(result.message);
             }
         },
 
-        async loadQuestionStats() {
-            // 加载题目统计信息
-            // 在实际题目加载后调用
+        async handleLogout() {
+            await authManager.logout();
+            this.loadExamStats();
         },
 
         async loadExamStats() {
-            if (authManager.isLoggedIn()) {
+            try {
                 const stats = await dbManager.getExamStats();
                 this.examStats = stats;
-            }
-        },
-
-        // 修改答题记录方法
-        async recordAnswer(questionId, questionType, isCorrect) {
-            if (authManager.isLoggedIn()) {
-                await dbManager.recordAnswer(questionId, questionType, isCorrect);
+            } catch (error) {
+                console.error('加载考试统计失败:', error);
+                // 设置默认值
+                this.examStats = { totalAttempts: 0, averageScore: 0 };
             }
         }
 
