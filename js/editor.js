@@ -3,25 +3,35 @@ new Vue({
     data: {
         questions: [],
         sidebarCollapsed: false,
-        currentQuestionIndex: 0
+        currentQuestionIndex: 0,
+        syncing: false,
+        syncError: null
     },
-    mounted() {
-        // 尝试从本地存储加载题目
-        const savedQuestions = localStorage.getItem('drill-questions');
-        if (savedQuestions) {
-            this.questions = JSON.parse(savedQuestions);
-        } else {
-            // 如果没有保存的题目，使用示例数据
-            this.questions = window.questions || [];
-        }
+    async mounted() {
+        const supabase = await this.getSupabase();
+        const { data, error } = await supabase
+            .from('questions')
+            .select('*')
+            .order('id');
+        if (!error && data) this.questions = data;
 
-        // 监听滚动以更新当前题目索引
         window.addEventListener('scroll', this.handleScroll, { passive: true });
     },
     beforeDestroy() {
         window.removeEventListener('scroll', this.handleScroll);
     },
     methods: {
+
+        async getSupabase() {
+            if (window.supabaseClient) return window.supabaseClient;
+
+            const { createClient } = supabase;
+            window.supabaseClient = createClient(
+                window.SUPABASE_CONFIG.SUPABASE_URL,
+                window.SUPABASE_CONFIG.SUPABASE_ANON_KEY
+            );
+            return window.supabaseClient;
+        },
         addQuestion() {
             const newId = this.questions.length > 0
                 ? Math.max(...this.questions.map(q => q.id)) + 1
@@ -59,8 +69,17 @@ new Vue({
             }
         },
 
-        saveQuestions() {
-            localStorage.setItem('drill-questions', JSON.stringify(this.questions));
+        async saveQuestions() {
+            const supabase = await this.getSupabase();
+            const { data, error } = await supabase
+                .from('questions')
+                .upsert(this.questions, { onConflict: 'id' });
+            if (error) {
+                console.error('保存失败:', error);
+                alert('保存失败：' + error.message);
+            } else {
+                alert('已同步到Supabase！');
+            }
         },
 
         exportQuestions() {
@@ -271,14 +290,28 @@ new Vue({
                 5: '作战环境'
             };
             return typeNames[type] || '未知';
+        },
+
+
+        async syncToSupabase() {
+            if (this.syncing) return;          // 节流
+            this.syncing = true;
+            this.syncError = null;
+            try {
+                const supabase = await this.getSupabase();
+                const { error } = await supabase
+                    .from('questions')
+                    .upsert(this.questions, { onConflict: 'id' });
+                if (error) throw error;
+                this.$message?.success?.('已同步到 Supabase！') || alert('已同步到 Supabase！');
+            } catch (e) {
+                this.syncError = e.message;
+                console.error('同步失败:', e);
+                this.$message?.error?.('同步失败：' + e.message) || alert('同步失败：' + e.message);
+            } finally {
+                this.syncing = false;
+            }
         }
-    },
-    watch: {
-        questions: {
-            handler() {
-                this.saveQuestions();
-            },
-            deep: true
-        }
+
     }
 });
