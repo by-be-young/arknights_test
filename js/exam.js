@@ -173,10 +173,17 @@ new Vue({
             this.mobileSheetOpen = !this.mobileSheetOpen;
         },
 
-        // 提交试卷
-        submitExam() {
+        // 提交试卷 （后端需要async）
+        async submitExam() {
             clearInterval(this.timerInterval);
             this.calculateScore();
+
+            // 记录考试结果（后端）
+            if (authManager.isLoggedIn() && this.answeredCount === 25) {
+                await dbManager.saveExamRecord(this.totalScore, 25);
+            }
+            // =========
+
             this.showResult = true;
         },
 
