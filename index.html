@@ -7,7 +7,7 @@
     <title>博士业务能力考核</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- 引入 Supabase -->
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
@@ -17,7 +17,7 @@
 
 <body>
     <div id="app">
-        <!-- 移动端菜单切换按钮 -->
+        <!-- 移动端菜单切换 -->
         <button class="mobile-menu-toggle" @click="toggleSidebar">
             <i class="fas fa-bars"></i>
         </button>
@@ -31,46 +31,40 @@
 
             <div class="nav-menu">
                 <div class="nav-item" :class="{ active: currentPage === 'index' }" @click="goToPage('index')">
-                    <i class="fas fa-home"></i>
-                    <span>首页概览</span>
+                    <i class="fas fa-home"></i><span>首页概览</span>
                 </div>
-
                 <div class="nav-item" :class="{ active: currentPage === 'training' }" @click="goToPage('training')">
-                    <i class="fas fa-graduation-cap"></i>
-                    <span>入职培训</span>
+                    <i class="fas fa-graduation-cap"></i><span>入职培训</span>
                 </div>
-
                 <div class="nav-item" :class="{ active: currentPage === 'practice' }" @click="goToPage('practice')">
-                    <i class="fas fa-book-open"></i>
-                    <span>题库练习</span>
+                    <i class="fas fa-book-open"></i><span>题库练习</span>
                 </div>
-
                 <div class="nav-item" :class="{ active: currentPage === 'quickjump' }" @click="goToPage('quickjump')">
-                    <i class="fas fa-forward"></i>
-                    <span>快速跳题</span>
+                    <i class="fas fa-forward"></i><span>快速跳题</span>
                 </div>
-
                 <div class="nav-item" :class="{ active: currentPage === 'exam' }" @click="goToPage('exam')">
-                    <i class="fas fa-file-alt"></i>
-                    <span>全真模拟</span>
+                    <i class="fas fa-file-alt"></i><span>全真模拟</span>
                 </div>
-
                 <div class="nav-item" :class="{ active: currentPage === 'wrong' }" @click="goToPage('wrong')">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>错题辑录</span>
+                    <i class="fas fa-exclamation-triangle"></i><span>错题辑录</span>
                 </div>
-
-                <div class="nav-item admin-only" :class="{ active: currentPage === 'admin' }" @click="goToPage('admin')"
-                    style="display: none;">
-                    <i class="fas fa-cog"></i>
-                    <span>管理员面板</span>
+                <div class="nav-item admin-only" @click="goToPage('admin')" style="display: none;">
+                    <i class="fas fa-cog"></i><span>管理员面板</span>
                 </div>
             </div>
 
             <div class="sidebar-footer">
+                <div class="user-info auth-only" style="display: none; margin-bottom: 15px; text-align: center;"></div>
+                <div class="auth-only" style="display: none; text-align: center; margin-bottom: 15px;">
+                    <button @click="handleLogout" class="btn btn-secondary" style="width: 100%; padding: 8px;">
+                        <i class="fas fa-sign-out-alt"></i> 退出登录
+                    </button>
+                </div>
+                <div class="update-notice-btn unauth-only" @click="showAuthModal = true; authMode = 'login'">
+                    <i class="fas fa-user"></i><span>用户登录</span>
+                </div>
                 <div class="update-notice-btn" @click="showSystemNotice = true">
-                    <i class="fas fa-bullhorn"></i>
-                    <span>系统公告</span>
+                    <i class="fas fa-bullhorn"></i><span>系统公告</span>
                 </div>
                 <p>博士考核系统 v2.0</p>
                 <p>© 2025 罗德岛制药</p>
@@ -86,66 +80,53 @@
                         <h1 class="page-title">博士业务能力考核</h1>
                         <p class="page-subtitle">欢迎回来，博士。请选择您要进行的考核类型。</p>
                     </div>
-
-                    <!-- 在 main-content 的首页部分添加 -->
-                    <div class="auth-modal" v-if="showAuthModal">
-                        <div class="auth-content">
-                            <h3>{{ authMode === 'login' ? '登录' : '注册' }}</h3>
-                            <input v-model="authUsername" placeholder="用户名" type="text">
-                            <input v-model="authPassword" placeholder="密码" type="password">
-                            <button @click="authMode === 'login' ? handleLogin() : handleRegister()">
-                                {{ authMode === 'login' ? '登录' : '注册' }}
-                            </button>
-                            <p @click="authMode = authMode === 'login' ? 'register' : 'login'">
-                                {{ authMode === 'login' ? '没有账号？注册' : '已有账号？登录' }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="user-info">
-                        <div class="user-avatar">
-                            <i class="fas fa-user-md"></i>
+                    <!-- 登录弹窗 -->
+                    <div v-if="showAuthModal" class="modal-overlay" @click="showAuthModal = false">
+                        <div class="modal-content" @click.stop style="max-width: 400px;">
+                            <div class="modal-header">
+                                <h3>{{ authMode === 'login' ? '用户登录' : '用户注册' }}</h3>
+                                <button class="modal-close" @click="showAuthModal = false"><i
+                                        class="fas fa-times"></i></button>
+                            </div>
+                            <div style="padding: 30px;">
+                                <input type="text" v-model="authUsername" placeholder="请输入用户名" class="auth-input">
+                                <input type="password" v-model="authPassword" placeholder="请输入密码" class="auth-input">
+                                <button @click="authMode === 'login' ? handleLogin() : handleRegister()"
+                                    class="nav-btn primary auth-btn">
+                                    <i :class="authMode === 'login' ? 'fas fa-sign-in-alt' : 'fas fa-user-plus'"></i>
+                                    {{ authMode === 'login' ? '登录' : '注册' }}
+                                </button>
+                                <p class="auth-switch" @click="authMode = authMode === 'login' ? 'register' : 'login'">
+                                    {{ authMode === 'login' ? '没有账号？点击注册' : '已有账号？点击登录' }}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="dashboard-grid">
                     <div class="dashboard-card" @click="goToPage('training')">
-                        <div class="card-icon">
-                            <i class="fas fa-graduation-cap"></i>
-                        </div>
+                        <div class="card-icon"><i class="fas fa-graduation-cap"></i></div>
                         <h3 class="card-title">入职培训</h3>
                         <p class="card-description">新手博士入门指南，熟悉干员和战斗基础知识。</p>
                     </div>
-
                     <div class="dashboard-card" @click="goToPage('practice')">
-                        <div class="card-icon">
-                            <i class="fas fa-book-open"></i>
-                        </div>
+                        <div class="card-icon"><i class="fas fa-book-open"></i></div>
                         <h3 class="card-title">题库练习</h3>
                         <p class="card-description">按照类型或难度分类进行针对性练习，巩固知识点。</p>
                     </div>
-
                     <div class="dashboard-card" @click="goToPage('quickjump')">
-                        <div class="card-icon">
-                            <i class="fas fa-forward"></i>
-                        </div>
+                        <div class="card-icon"><i class="fas fa-forward"></i></div>
                         <h3 class="card-title">快速跳题</h3>
                         <p class="card-description">随机跳题或题号跳题，快速定位练习内容。</p>
                     </div>
-
                     <div class="dashboard-card" @click="goToPage('exam')">
-                        <div class="card-icon">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
+                        <div class="card-icon"><i class="fas fa-file-alt"></i></div>
                         <h3 class="card-title">全真模拟</h3>
                         <p class="card-description">生成完整试卷进行模拟考试，包含25题，限时15分钟。</p>
                     </div>
-
                     <div class="dashboard-card" @click="goToPage('wrong')">
-                        <div class="card-icon">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
+                        <div class="card-icon"><i class="fas fa-exclamation-triangle"></i></div>
                         <h3 class="card-title">错题辑录</h3>
                         <p class="card-description">查看和分析答错的题目，针对性复习薄弱环节。</p>
                     </div>
@@ -159,20 +140,14 @@
                         <h1 class="page-title">入职培训</h1>
                         <p class="page-subtitle">新手博士入门指南，熟悉干员和战斗基础知识</p>
                     </div>
-                    <button class="back-btn" @click="goToPage('index')">
-                        <i class="fas fa-arrow-left"></i> 返回首页
-                    </button>
+                    <button class="back-btn" @click="goToPage('index')"><i class="fas fa-arrow-left"></i> 返回首页</button>
                 </div>
-
                 <div class="training-controls">
-                    <button class="nav-btn primary" @click="goToFirstUnansweredTraining">
-                        <i class="fas fa-play"></i> 开始练习
-                    </button>
-                    <button class="nav-btn secondary" @click="clearTrainingRecords">
-                        <i class="fas fa-eraser"></i> 清除记录
-                    </button>
+                    <button class="nav-btn primary" @click="goToFirstUnansweredTraining"><i class="fas fa-play"></i>
+                        开始练习</button>
+                    <button class="nav-btn secondary" @click="clearTrainingRecords"><i class="fas fa-eraser"></i>
+                        清除记录</button>
                 </div>
-
                 <div class="questions-grid training-grid">
                     <div class="question-item" v-for="question in trainingQuestions" :key="question.id"
                         @click="goToTrainingQuestion(question.id)"
@@ -189,44 +164,33 @@
                         <h1 class="page-title">题库练习</h1>
                         <p class="page-subtitle">选择分类方式并开始练习</p>
                     </div>
-                    <button class="back-btn" @click="goToPage('index')">
-                        <i class="fas fa-arrow-left"></i> 返回首页
-                    </button>
+                    <button class="back-btn" @click="goToPage('index')"><i class="fas fa-arrow-left"></i> 返回首页</button>
                 </div>
-
                 <div class="mode-selector">
                     <div class="mode-option" :class="{ active: practiceMode === 'type' }"
-                        @click="practiceMode = 'type'">
-                        按类型分类
-                    </div>
+                        @click="practiceMode = 'type'">按类型分类</div>
                     <div class="mode-option" :class="{ active: practiceMode === 'difficulty' }"
-                        @click="practiceMode = 'difficulty'">
-                        按难度分类
-                    </div>
+                        @click="practiceMode = 'difficulty'">按难度分类</div>
                 </div>
-
-                <!-- 颜色图例 -->
                 <div class="color-legend">
                     <div class="legend-title">颜色图例:</div>
                     <div class="legend-items">
-                        <div v-if="practiceMode === 'type'" class="legend-item" v-for="i in 5" :key="'type-' + i">
+                        <div v-if="practiceMode === 'type'" class="legend-item" v-for="i in 5" :key="'type-'+i">
                             <div class="legend-color" :style="{ backgroundColor: getDifficultyColor(i) }"></div>
                             <span class="legend-text">{{ getDifficultyText(i) }}</span>
                         </div>
-                        <div v-if="practiceMode === 'difficulty'" class="legend-item" v-for="i in 5" :key="'diff-' + i">
+                        <div v-if="practiceMode === 'difficulty'" class="legend-item" v-for="i in 5" :key="'diff-'+i">
                             <div class="legend-color" :style="{ backgroundColor: getTypeColor(i) }"></div>
                             <span class="legend-text">{{ getTypeText(i) }}</span>
                         </div>
                     </div>
                 </div>
-
                 <div class="categories-container">
                     <div class="category-card" v-for="(category, key) in categories" :key="key">
                         <div class="category-header" @click="toggleCategory(key)">
                             <div class="category-title">{{ category.name }}</div>
                             <div class="category-count">{{ category.questions.length }} 题</div>
                         </div>
-
                         <div class="questions-grid" v-show="category.isOpen">
                             <div class="question-item" v-for="question in category.questions" :key="question.id"
                                 @click="goToQuestion(question.id, 'practice')"
@@ -245,39 +209,23 @@
                         <h1 class="page-title">快速跳题</h1>
                         <p class="page-subtitle">随机跳题或题号跳题，快速定位练习内容</p>
                     </div>
-                    <button class="back-btn" @click="goToPage('index')">
-                        <i class="fas fa-arrow-left"></i> 返回首页
-                    </button>
+                    <button class="back-btn" @click="goToPage('index')"><i class="fas fa-arrow-left"></i> 返回首页</button>
                 </div>
-
                 <div class="quickjump-container">
                     <div class="quickjump-card">
-                        <div class="card-icon" style="margin: 0 auto 30px;">
-                            <i class="fas fa-random"></i>
-                        </div>
+                        <div class="card-icon"><i class="fas fa-random"></i></div>
                         <h3 class="card-title">随机跳题</h3>
                         <p class="card-description">系统将从题库（不包括入职培训）中随机抽取题目，检验您的综合能力。</p>
-                        <button class="nav-btn primary"
-                            style="margin: 20px auto 0; padding: 16px 40px; font-size: 1.1rem;" @click="startRandom">
-                            <i class="fas fa-play"></i> 开始随机练习
-                        </button>
+                        <button class="nav-btn primary quickjump-btn" @click="startRandom"><i class="fas fa-play"></i>
+                            开始随机练习</button>
                     </div>
-
                     <div class="quickjump-card">
-                        <div class="card-icon" style="margin: 0 auto 30px;">
-                            <i class="fas fa-forward"></i>
-                        </div>
+                        <div class="card-icon"><i class="fas fa-forward"></i></div>
                         <h3 class="card-title">题号跳题</h3>
                         <p class="card-description">请输入题目ID直接跳转到指定题目。入职培训题目请使用"G+题号"格式，如"G3"。</p>
-                        <div style="margin: 20px auto; max-width: 300px;">
-                            <input type="text" v-model="jumpQuestionId" placeholder="请输入题目ID或G+题号" style="width: 100%; padding: 15px; border-radius: var(--border-radius); 
-                                border: 2px solid var(--border-color); background: var(--bg-card-light); 
-                                color: var(--text-primary); font-size: 1.1rem; text-align: center;">
-                        </div>
-                        <button class="nav-btn primary"
-                            style="margin: 10px auto 0; padding: 16px 40px; font-size: 1.1rem;" @click="startJump">
-                            <i class="fas fa-play"></i> 跳转到题目
-                        </button>
+                        <input type="text" v-model="jumpQuestionId" placeholder="请输入题目ID或G+题号" class="jump-input">
+                        <button class="nav-btn primary quickjump-btn" @click="startJump"><i class="fas fa-play"></i>
+                            跳转到题目</button>
                     </div>
                 </div>
             </div>
@@ -289,35 +237,32 @@
                         <h1 class="page-title">全真模拟</h1>
                         <p class="page-subtitle">模拟真实考试环境，检验综合能力</p>
                     </div>
-                    <button class="back-btn" @click="goToPage('index')">
-                        <i class="fas fa-arrow-left"></i> 返回首页
-                    </button>
+                    <button class="back-btn" @click="goToPage('index')"><i class="fas fa-arrow-left"></i> 返回首页</button>
                 </div>
-
-                <div class="dashboard-card" style="text-align: center; padding: 60px 40px;">
-                    <div class="card-icon" style="margin: 0 auto 30px;">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
+                <div class="dashboard-card exam-card">
+                    <div class="card-icon"><i class="fas fa-file-alt"></i></div>
                     <h3 class="card-title">全真模拟考试</h3>
                     <p class="card-description">生成完整试卷进行模拟考试，包含25题，限时15分钟。</p>
-                    <div class="exam-info">
-                        <div class="info-item">
-                            <i class="fas fa-list-ol"></i>
-                            <span>题目数量：25题</span>
+
+                    <!-- 考试统计信息 -->
+                    <div class="exam-stats" v-if="examStats.totalAttempts > 0">
+                        <div class="stat-item">
+                            <div class="stat-value">{{ examStats.totalAttempts }}</div>
+                            <div class="stat-label">总考试次数</div>
                         </div>
-                        <div class="info-item">
-                            <i class="fas fa-clock"></i>
-                            <span>考试时间：15分钟</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-star"></i>
-                            <span>题目类型：全类型、全难度等级随机组卷</span>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ examStats.averageScore.toFixed(1) }}</div>
+                            <div class="stat-label">平均分</div>
                         </div>
                     </div>
-                    <button class="nav-btn primary" style="margin: 30px auto 0; padding: 16px 40px; font-size: 1.1rem;"
-                        @click="startExam">
-                        <i class="fas fa-play"></i> 开始考试
-                    </button>
+
+                    <div class="exam-info">
+                        <div class="info-item"><i class="fas fa-list-ol"></i><span>题目数量：25题</span></div>
+                        <div class="info-item"><i class="fas fa-clock"></i><span>考试时间：15分钟</span></div>
+                        <div class="info-item"><i class="fas fa-star"></i><span>题目类型：全类型、全难度等级随机组卷</span></div>
+                    </div>
+                    <button class="nav-btn primary exam-start-btn" @click="startExam"><i class="fas fa-play"></i>
+                        开始考试</button>
                 </div>
             </div>
 
@@ -328,11 +273,8 @@
                         <h1 class="page-title">错题辑录</h1>
                         <p class="page-subtitle">查看和分析答错的题目，针对性复习薄弱环节</p>
                     </div>
-                    <button class="back-btn" @click="goToPage('index')">
-                        <i class="fas fa-arrow-left"></i> 返回首页
-                    </button>
+                    <button class="back-btn" @click="goToPage('index')"><i class="fas fa-arrow-left"></i> 返回首页</button>
                 </div>
-
                 <div class="wrong-controls">
                     <div class="wrong-stats">
                         <div class="stat-item">
@@ -348,31 +290,49 @@
                             <div class="stat-label">易错类型</div>
                         </div>
                     </div>
-                    <button class="nav-btn secondary" @click="clearWrongRecords">
-                        <i class="fas fa-eraser"></i> 清除所有错题
-                    </button>
+                    <button class="nav-btn secondary" @click="clearWrongRecords"><i class="fas fa-eraser"></i>
+                        清除所有错题</button>
                 </div>
-
                 <div class="categories-container">
                     <div class="category-card" v-for="(category, key) in wrongCategories" :key="key">
                         <div class="category-header" @click="toggleWrongCategory(key)">
                             <div class="category-title">{{ category.name }}</div>
                             <div class="category-count">{{ category.questions.length }} 题</div>
-                            <button class="delete-category-btn" @click.stop="deleteWrongCategory(key)">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <button class="delete-category-btn" @click.stop="deleteWrongCategory(key)"><i
+                                    class="fas fa-trash"></i></button>
                         </div>
-
                         <div class="questions-grid" v-show="category.isOpen">
                             <div class="question-item" v-for="question in category.questions" :key="question.id"
                                 @click="goToWrongQuestion(question.id)"
                                 :style="{ backgroundColor: getDifficultyColor(question.difficulty) }">
                                 {{ question.id }}
-                                <div class="delete-question-btn" @click.stop="deleteWrongQuestion(question.id)">
-                                    <i class="fas fa-times"></i>
-                                </div>
+                                <div class="delete-question-btn" @click.stop="deleteWrongQuestion(question.id)"><i
+                                        class="fas fa-times"></i></div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 管理员面板页面 -->
+            <div v-if="currentPage === 'admin'">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">管理员面板</h1>
+                        <p class="page-subtitle">管理题库与培训题目</p>
+                    </div>
+                    <button class="back-btn" @click="goToPage('index')"><i class="fas fa-arrow-left"></i> 返回首页</button>
+                </div>
+                <div class="admin-grid">
+                    <div class="dashboard-card" @click="goToEditor('questions')">
+                        <div class="card-icon"><i class="fas fa-database"></i></div>
+                        <h3 class="card-title">题库编辑器</h3>
+                        <p class="card-description">管理正式题库（questions 表）</p>
+                    </div>
+                    <div class="dashboard-card" @click="goToEditor('training')">
+                        <div class="card-icon"><i class="fas fa-graduation-cap"></i></div>
+                        <h3 class="card-title">培训题目编辑器</h3>
+                        <p class="card-description">管理入职培训题目（training_questions 表）</p>
                     </div>
                 </div>
             </div>
@@ -384,11 +344,8 @@
                         <h1 class="page-title">答题</h1>
                         <p class="page-subtitle">认真阅读题目并选择正确答案</p>
                     </div>
-                    <button class="back-btn" @click="goBackFromQuestion">
-                        <i class="fas fa-arrow-left"></i> 返回
-                    </button>
+                    <button class="back-btn" @click="goBackFromQuestion"><i class="fas fa-arrow-left"></i> 返回</button>
                 </div>
-
                 <div class="question-card">
                     <div class="question-meta">
                         <div class="meta-tag" :style="{ backgroundColor: getTypeColor(currentQuestion.type) }">
@@ -398,58 +355,66 @@
                             :style="{ backgroundColor: getDifficultyColor(currentQuestion.difficulty) }">
                             <i class="fas fa-star"></i> 难度: {{ currentQuestion.difficultyText }}
                         </div>
-                        <div class="meta-tag">
-                            <i class="fas fa-hashtag"></i> 题目ID: {{ currentQuestion.id }}
-                        </div>
+                        <div class="meta-tag"><i class="fas fa-hashtag"></i> 题目ID: {{ currentQuestion.id }}</div>
                     </div>
                     <div class="question-source" v-if="currentQuestion.resource">
                         <i class="fas fa-map-marker-alt"></i> 题源: {{ currentQuestion.resource }}
                     </div>
-
                     <div class="question-text">
                         <p v-html="currentQuestion.question"></p>
                         <img v-if="currentQuestion.picture"
-                            :src="questionMode === 'training' ? './training-images/' + currentQuestion.id + '.png' : './images/' + currentQuestion.id + '.png'"
-                            :alt="'题目' + currentQuestion.id + '图片'"
-                            style="max-width: 100%; margin-top: 20px; border-radius: 8px;">
+                            :src="(questionMode==='training'?'./training-images/':'./images/')+currentQuestion.id+'.png'"
+                            alt="题目图片" style="max-width: 100%; margin-top: 20px; border-radius: 8px;">
                     </div>
-
                     <div class="options-container">
-                        <div v-for="(option, index) in currentQuestion.options" :key="index" :class="['option', {
-                                    'selected': selectedOption === index + 1,
-                                    'correct': showAnswer && index + 1 === currentQuestion.answer,
-                                    'wrong': showAnswer && selectedOption === index + 1 && selectedOption !== currentQuestion.answer
-                                }]" @click="selectOption(index + 1)">
+                        <div v-for="(option, index) in currentQuestion.options" :key="index"
+                            :class="['option', { selected: selectedOption === index + 1,
+                                     correct: showAnswer && index + 1 === currentQuestion.answer,
+                                     wrong: showAnswer && selectedOption === index + 1 && selectedOption !== currentQuestion.answer }]" @click="selectOption(index + 1)">
                             <span class="option-label">{{ String.fromCharCode(65 + index) }}</span>
                             <span class="option-text" v-html="option"></span>
                         </div>
                     </div>
-
                     <div class="navigation-buttons">
                         <button class="nav-btn secondary" @click="prevQuestion" :disabled="!hasPrevQuestion">
                             <i class="fas fa-arrow-left"></i> 上一题
                         </button>
-
                         <button class="nav-btn primary" @click="checkAnswer" v-if="!showAnswer">
                             <i class="fas fa-check"></i> 提交答案
                         </button>
-
                         <button class="nav-btn primary" @click="nextQuestion" :disabled="!hasNextQuestion">
                             下一题 <i class="fas fa-arrow-right"></i>
                         </button>
                     </div>
                 </div>
-
                 <div class="question-card answer-analysis" v-if="showAnswer" ref="answerAnalysis">
                     <h3 :style="{ color: isAnswerCorrect ? 'var(--success-color)' : 'var(--warning-color)' }">
                         <i :class="isAnswerCorrect ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
                         {{ isAnswerCorrect ? '回答正确!' : '回答错误!' }}
                     </h3>
-                    <p style="margin: 10px 0;"><strong>正确答案: {{ String.fromCharCode(64 + currentQuestion.answer)
-                            }}</strong></p>
-                    <p v-if="!isAnswerCorrect" style="margin: 10px 0;">
-                        <strong>您的选择: {{ String.fromCharCode(64 + selectedOption) }}</strong>
-                    </p>
+                    <p><strong>正确答案: {{ String.fromCharCode(64 + currentQuestion.answer) }}</strong></p>
+                    <p v-if="!isAnswerCorrect"><strong>您的选择: {{ String.fromCharCode(64 + selectedOption) }}</strong></p>
+
+                    <!-- 题目统计信息 -->
+                    <div class="question-stats" v-if="questionStats && questionStats.totalUsers > 0">
+                        <h4>题目统计</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">{{ questionStats.totalUsers }}</div>
+                                <div class="stat-label">做过此题的用户数</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">{{ (questionStats.correctRate * 100).toFixed(1) }}%</div>
+                                <div class="stat-label">正确率</div>
+                            </div>
+                            <div class="stat-item" v-if="questionStats.mostCommonWrongOption">
+                                <div class="stat-value">{{ String.fromCharCode(64 + questionStats.mostCommonWrongOption)
+                                    }}</div>
+                                <div class="stat-label">最常错选选项</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <p style="margin-top: 15px;" v-html="currentQuestion.analysis"></p>
                 </div>
             </div>
@@ -460,27 +425,19 @@
             <div class="modal-content" @click.stop>
                 <div class="modal-header">
                     <h3>系统公告</h3>
-                    <button class="modal-close" @click="showSystemNotice = false">
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <button class="modal-close" @click="showSystemNotice = false"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="system-notice-tabs">
                     <div class="tab" :class="{ active: systemNoticeTab === 'tips' }" @click="systemNoticeTab = 'tips'">
-                        温馨提示
-                    </div>
+                        温馨提示</div>
                     <div class="tab" :class="{ active: systemNoticeTab === 'updates' }"
-                        @click="systemNoticeTab = 'updates'">
-                        更新公告
-                    </div>
+                        @click="systemNoticeTab = 'updates'">更新公告</div>
                 </div>
                 <div class="update-container">
-                    <!-- 温馨提示内容 -->
                     <div class="tips-content" v-if="systemNoticeTab === 'tips'">
                         <h4>系统使用指南</h4>
                         <div class="content-text" v-html="systemTips"></div>
                     </div>
-
-                    <!-- 更新公告内容 - 修改为左右布局 -->
                     <div class="updates-content" v-if="systemNoticeTab === 'updates'">
                         <div class="version-list">
                             <div class="version-item" v-for="version in updateVersions" :key="version.id"
@@ -498,11 +455,10 @@
                 </div>
             </div>
         </div>
-
     </div>
 
-    <!-- 引入题目数据 -->
-    <script src="js/questions.js"></script>
+    <!-- 业务脚本 -->
+    <!-- <script src="js/questions.js"></script> -->
     <script src="js/training-questions.js"></script>
     <script src="js/update-notices.js"></script>
     <script src="js/app.js"></script>
