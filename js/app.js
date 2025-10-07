@@ -27,7 +27,15 @@ new Vue({
         trainingRecords: {},
 
         // 错题辑录相关
-        wrongQuestions: []
+        wrongQuestions: [],
+
+        // 后端相关
+        showAuthModal: false,
+        authMode: 'login',
+        authUsername: '',
+        authPassword: '',
+        questionStats: {}, // 存储题目统计信息
+        examStats: { totalAttempts: 0, averageScore: 0 } // 考试统计
     },
     computed: {
         hasPrevQuestion() {
@@ -97,6 +105,8 @@ new Vue({
         this.loadTrainingRecords();
         this.loadWrongQuestions();
         this.loadSystemData();
+        this.loadQuestionStats();
+        this.loadExamStats();
 
         // 点击侧边栏外部关闭侧边栏
         document.addEventListener('click', (event) => {
@@ -719,6 +729,51 @@ new Vue({
             if (window.systemTips) {
                 this.systemTips = window.systemTips;
             }
+        },
+
+        //==============后端相关=====================
+
+        async handleLogin() {
+            const result = await authManager.login(this.authUsername, this.authPassword);
+            if (result.success) {
+                this.showAuthModal = false;
+                this.authUsername = '';
+                this.authPassword = '';
+            } else {
+                alert(result.message);
+            }
+        },
+
+        async handleRegister() {
+            const result = await authManager.register(this.authUsername, this.authPassword);
+            if (result.success) {
+                alert(result.message);
+                this.showAuthModal = false;
+                this.authUsername = '';
+                this.authPassword = '';
+            } else {
+                alert(result.message);
+            }
+        },
+
+        async loadQuestionStats() {
+            // 加载题目统计信息
+            // 在实际题目加载后调用
+        },
+
+        async loadExamStats() {
+            if (authManager.isLoggedIn()) {
+                const stats = await dbManager.getExamStats();
+                this.examStats = stats;
+            }
+        },
+
+        // 修改答题记录方法
+        async recordAnswer(questionId, questionType, isCorrect) {
+            if (authManager.isLoggedIn()) {
+                await dbManager.recordAnswer(questionId, questionType, isCorrect);
+            }
         }
+
     }
 });
