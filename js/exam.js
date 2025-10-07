@@ -10,6 +10,7 @@ new Vue({
         showResult: false,
         totalScore: 0,
         maxScore: 100,
+        rawQuestions: [],
         showQuestionDetailModal: false,
         currentDetailQuestion: null,
         currentDetailSectionIndex: 0,
@@ -32,14 +33,89 @@ new Vue({
             return count;
         }
     },
-    mounted() {
-        this.generateExamPaper();
-        this.startTimer();
-        this.setupCurrentQuestionTracker();
+    async mounted() {
+        console.log('开始初始化...');
+        try {
+            await this.loadQuestions();
+            console.log('题目加载完成，开始生成试卷');
+            this.generateExamPaper();
+            this.startTimer();
+            this.setupCurrentQuestionTracker();
+            console.log('初始化完成');
+        } catch (error) {
+            console.error('初始化失败:', error);
+            // 紧急修复：如果加载失败，尝试从全局变量获取
+            if (window.questions && window.questions.length > 0) {
+                console.log('使用备用数据源');
+                this.rawQuestions = window.questions;
+                this.generateExamPaper();
+                this.startTimer();
+                this.setupCurrentQuestionTracker();
+            } else {
+                alert('题目数据加载失败，请刷新页面重试');
+            }
+        }
     },
     methods: {
+        async loadQuestions() {
+            console.log('开始加载题目...');
+
+            if (window.dbManager) {
+                try {
+                    console.log('使用 dbManager 获取题目');
+                    const list = await window.dbManager.getQuestions();
+                    console.log('获取到的题目列表长度:', list ? list.length : 0);
+
+                    if (list && list.length > 0) {
+                        this.rawQuestions = list;
+                        window.questions = list;
+                        console.log('题目数据设置成功:', this.rawQuestions.length, '道题目');
+                    } else {
+                        console.warn('dbManager返回空数组');
+                        // 尝试从本地questions.js加载
+                        if (window.questions && window.questions.length > 0) {
+                            console.log('使用本地questions数据');
+                            this.rawQuestions = window.questions;
+                        }
+                    }
+                } catch (error) {
+                    console.error('dbManager获取题目失败:', error);
+                    // 备用方案：从本地文件加载
+                    if (window.questions && window.questions.length > 0) {
+                        console.log('使用本地题目数据作为备用');
+                        this.rawQuestions = window.questions;
+                    } else {
+                        throw new Error('无法加载题目数据');
+                    }
+                }
+            } else {
+                console.log('dbManager未定义，尝试使用本地questions');
+                if (window.questions && window.questions.length > 0) {
+                    console.log('使用本地questions数据');
+                    this.rawQuestions = window.questions;
+                } else {
+                    throw new Error('dbManager未定义且无本地题目数据');
+                }
+            }
+
+            // 最终验证
+            if (!this.rawQuestions || this.rawQuestions.length === 0) {
+                throw new Error('未找到可用的题目数据');
+            }
+
+            console.log('题目加载完成，总计:', this.rawQuestions.length, '道题目');
+        },
+
         // 生成试卷
         generateExamPaper() {
+            console.log('开始生成试卷，可用题目数:', this.rawQuestions.length);
+
+            if (!this.rawQuestions || this.rawQuestions.length === 0) {
+                console.error('没有可用的题目数据！无法生成试卷');
+                alert('题目数据加载失败，请刷新页面重试');
+                return;
+            }
+
             const typeNames = {
                 1: '干员调配与特性化决策',
                 2: '空间部署与极致化战术',
@@ -58,6 +134,8 @@ new Vue({
 
             // 初始化试卷结构
             this.examPaper = [];
+            let totalQuestions = 0;
+
             for (let type = 1; type <= 5; type++) {
                 const section = {
                     type: type,
@@ -67,9 +145,11 @@ new Vue({
 
                 // 为每个难度选择一题
                 for (let difficulty = 1; difficulty <= 5; difficulty++) {
-                    const questionsOfTypeAndDifficulty = window.questions.filter(
+                    const questionsOfTypeAndDifficulty = this.rawQuestions.filter(
                         q => q.type === type && q.difficulty === difficulty
                     );
+
+                    console.log(`类型${type}难度${difficulty}的题目数:`, questionsOfTypeAndDifficulty.length);
 
                     if (questionsOfTypeAndDifficulty.length > 0) {
                         // 随机选择一题
@@ -82,11 +162,19 @@ new Vue({
                         selectedQuestion.userAnswer = null;
 
                         section.questions.push(selectedQuestion);
+                        totalQuestions++;
+                    } else {
+                        console.warn(`未找到类型${type}难度${difficulty}的题目`);
                     }
                 }
 
+                // 按难度排序
+                section.questions.sort((a, b) => a.difficulty - b.difficulty);
                 this.examPaper.push(section);
             }
+
+            console.log('试卷生成完成，总计题目:', totalQuestions);
+            console.log('试卷结构:', this.examPaper);
 
             // 设置第一题为当前题目
             this.currentQuestionNumber = 1;
@@ -173,16 +261,29 @@ new Vue({
             this.mobileSheetOpen = !this.mobileSheetOpen;
         },
 
-        // 提交试卷 （后端需要async）
+        // 提交试卷 
         async submitExam() {
             clearInterval(this.timerInterval);
             this.calculateScore();
 
-            // 记录考试结果（后端）
-            if (authManager.isLoggedIn() && this.answeredCount === 25) {
-                await dbManager.saveExamRecord(this.totalScore, 25);
+            // 直接保存考试记录，无需登录检查
+            if (window.dbManager) {
+                try {
+                    console.log('开始保存考试记录...');
+                    // 只传递分数，不传递其他不存在的字段
+                    const examRecord = await window.dbManager.saveExamRecord(this.totalScore);
+
+                    if (examRecord) {
+                        console.log('考试记录保存成功，记录ID:', examRecord.id);
+                    } else {
+                        console.warn('考试记录保存失败');
+                    }
+                } catch (error) {
+                    console.error('保存考试记录时发生错误:', error);
+                }
+            } else {
+                console.warn('dbManager 未定义，跳过保存考试记录');
             }
-            // =========
 
             this.showResult = true;
         },
