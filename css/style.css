@@ -883,6 +883,220 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+/* 题目统计样式 */
+.question-stats {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.question-stats h4 {
+    margin-bottom: 15px;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.stats-grid .stat-item {
+    text-align: center;
+    padding: 15px;
+    background: var(--bg-card-light);
+    border-radius: var(--border-radius);
+}
+
+.stats-grid .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+
+.stats-grid .stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* 考试统计样式 */
+.exam-stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 20px 0;
+}
+
+.exam-stats .stat-item {
+    text-align: center;
+}
+
+.exam-stats .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.exam-stats .stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+/* 认证相关样式 */
+.auth-input {
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-card-light);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.auth-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(94, 53, 177, 0.2);
+}
+
+.auth-btn {
+    width: 100%;
+    margin: 15px 0;
+    justify-content: center;
+}
+
+.auth-switch {
+    text-align: center;
+    cursor: pointer;
+    color: var(--primary-color);
+    font-weight: 500;
+    margin-top: 15px;
+    transition: var(--transition);
+}
+
+.auth-switch:hover {
+    color: var(--primary-light);
+}
+
+/* 快速跳题相关样式 */
+.jump-input {
+    width: 100%;
+    padding: 12px 16px;
+    margin: 20px 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-card-light);
+    color: var(--text-primary);
+    font-size: 1rem;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.jump-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(94, 53, 177, 0.2);
+}
+
+.quickjump-btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* 考试相关样式 */
+.exam-card {
+    text-align: center;
+    padding: 60px 40px;
+}
+
+.exam-start-btn {
+    margin-top: 30px;
+    justify-content: center;
+}
+
+/* 题目统计样式 */
+.question-stats {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.question-stats h4 {
+    margin-bottom: 15px;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.stats-grid .stat-item {
+    text-align: center;
+    padding: 15px;
+    background: var(--bg-card-light);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.stats-grid .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+
+.stats-grid .stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* 考试统计样式 */
+.exam-stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 20px 0;
+    padding: 20px;
+    background: var(--bg-card-light);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.exam-stats .stat-item {
+    text-align: center;
+}
+
+.exam-stats .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.exam-stats .stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+
 @media (max-width: 1024px) {
     .sidebar {
         transform: translateX(-100%);
@@ -946,6 +1160,21 @@ body {
 @media (max-width: 768px) {
     .main-content {
         padding: 15px 10px;
+    }
+
+    .exam-stats {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .quickjump-btn,
+    .exam-start-btn,
+    .auth-btn {
+        padding: 12px 20px;
     }
 
     .delete-question-btn {
