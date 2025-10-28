@@ -13,7 +13,15 @@ new Vue({
             .from('questions')
             .select('*')
             .order('id');
-        if (!error && data) this.questions = data;
+
+        if (!error && data) {
+            console.log('从Supabase获取的数据:', data);
+            // 从 Supabase 获取数据时，将 <br> 转回 \n
+            this.questions = data.map(question => this.convertFromSupabase(question));
+            console.log('转换后的数据:', this.questions);
+        } else {
+            console.error('获取数据失败:', error);
+        }
 
         window.addEventListener('scroll', this.handleScroll, { passive: true });
     },
@@ -21,6 +29,17 @@ new Vue({
         window.removeEventListener('scroll', this.handleScroll);
     },
     methods: {
+        // 更新关键词数组
+        updateKeywords(question) {
+            if (question.keywordsInput) {
+                // 分割字符串并去除空格
+                question.keywords = question.keywordsInput.split(',' || '，')
+                    .map(keyword => keyword.trim())
+                    .filter(keyword => keyword.length > 0);
+            } else {
+                question.keywords = [];
+            }
+        },
 
         async getSupabase() {
             if (window.supabaseClient) return window.supabaseClient;
@@ -32,6 +51,56 @@ new Vue({
             );
             return window.supabaseClient;
         },
+
+        // 同步到 Supabase 前的转换
+        convertToSupabase(question) {
+            const converted = { ...question };
+
+            if (converted.question) {
+                converted.question = converted.question.replace(/\n/g, '<br>');
+            }
+            if (converted.analysis) {
+                converted.analysis = converted.analysis.replace(/\n/g, '<br>');
+            }
+            if (converted.options) {
+                converted.options = converted.options.map(option =>
+                    option ? option.replace(/\n/g, '<br>') : ''
+                );
+            }
+
+            // 确保 keywords 字段存在
+            converted.keywords = converted.keywords || [];
+
+            // 移除临时的 keywordsInput 字段
+            delete converted.keywordsInput;
+
+            return converted;
+        },
+
+
+        // 从 Supabase 获取后的转换
+        convertFromSupabase(question) {
+            const converted = { ...question };
+
+            if (converted.question) {
+                converted.question = converted.question.replace(/<br>/g, '\n');
+            }
+            if (converted.analysis) {
+                converted.analysis = converted.analysis.replace(/<br>/g, '\n');
+            }
+            if (converted.options) {
+                converted.options = converted.options.map(option =>
+                    option ? option.replace(/<br>/g, '\n') : ''
+                );
+            }
+
+            // 确保 keywords 字段存在并创建输入字段
+            converted.keywords = converted.keywords || [];
+            converted.keywordsInput = converted.keywords.join(', ');
+
+            return converted;
+        },
+
         addQuestion() {
             const newId = this.questions.length > 0
                 ? Math.max(...this.questions.map(q => q.id)) + 1
@@ -46,21 +115,20 @@ new Vue({
                 picture: false,
                 options: ['', '', '', ''],
                 answer: 1,
-                analysis: ''
+                analysis: '',
+                keywords: [], // 新增字段
+                keywordsInput: '' // 临时输入字段
             });
 
-            this.saveQuestions();
-
-            // 滚动到新添加的题目
             this.$nextTick(() => {
                 this.scrollToQuestion(this.questions.length - 1);
             });
         },
 
+
         removeQuestion(index) {
             if (confirm('确定要删除这道题目吗？')) {
                 this.questions.splice(index, 1);
-                this.saveQuestions();
 
                 // 如果删除的是当前显示的题目，更新当前索引
                 if (this.currentQuestionIndex >= index && this.currentQuestionIndex > 0) {
@@ -70,34 +138,48 @@ new Vue({
         },
 
         async saveQuestions() {
-            const supabase = await this.getSupabase();
-            const { data, error } = await supabase
-                .from('questions')
-                .upsert(this.questions, { onConflict: 'id' });
-            if (error) {
-                console.error('保存失败:', error);
-                alert('保存失败：' + error.message);
-            } else {
-                alert('已同步到Supabase！');
+            await this.syncToSupabase();
+        },
+
+        async syncToSupabase() {
+            if (this.syncing) return;
+            this.syncing = true;
+            this.syncError = null;
+            try {
+                const supabase = await this.getSupabase();
+
+                console.log('同步前的数据:', this.questions);
+
+                // 同步前转换所有数据
+                const questionsToSync = this.questions.map(question =>
+                    this.convertToSupabase(question)
+                );
+
+                console.log('准备同步的数据:', questionsToSync);
+
+                const { data, error } = await supabase
+                    .from('questions')
+                    .upsert(questionsToSync, { onConflict: 'id' })
+                    .select();
+
+                if (error) throw error;
+
+                console.log('同步成功，返回的数据:', data);
+                alert('已同步到 Supabase！');
+            } catch (e) {
+                this.syncError = e.message;
+                console.error('同步失败:', e);
+                alert('同步失败：' + e.message);
+            } finally {
+                this.syncing = false;
             }
         },
 
         exportQuestions() {
-            // 创建深拷贝并处理换行符
-            const questionsToExport = JSON.parse(JSON.stringify(this.questions));
-
-            // 将换行符转换为<br>标签
-            questionsToExport.forEach(question => {
-                if (question.question) {
-                    question.question = question.question.replace(/\n/g, '<br>');
-                }
-                if (question.analysis) {
-                    question.analysis = question.analysis.replace(/\n/g, '<br>');
-                }
-                question.options = question.options.map(option =>
-                    option ? option.replace(/\n/g, '<br>') : ''
-                );
-            });
+            // 创建深拷贝并处理换行符（使用转换方法）
+            const questionsToExport = this.questions.map(question =>
+                this.convertToSupabase(JSON.parse(JSON.stringify(question)))
+            );
 
             const questionsJson = JSON.stringify(questionsToExport, null, 2);
             const jsContent = `window.questions = ${questionsJson};`;
@@ -117,26 +199,12 @@ new Vue({
             const input = prompt('请粘贴题目数据:');
             if (input) {
                 try {
-                    // 尝试解析JSON
                     const parsed = JSON.parse(input);
                     if (Array.isArray(parsed)) {
-                        // 将<br>标签转换回换行符
-                        const processedQuestions = parsed.map(question => {
-                            if (question.question) {
-                                question.question = question.question.replace(/<br>/g, '\n');
-                            }
-                            if (question.analysis) {
-                                question.analysis = question.analysis.replace(/<br>/g, '\n');
-                            }
-                            if (question.options) {
-                                question.options = question.options.map(option =>
-                                    option ? option.replace(/<br>/g, '\n') : ''
-                                );
-                            }
-                            return question;
-                        });
-
-                        this.questions = processedQuestions;
+                        // 导入时转换数据格式
+                        this.questions = parsed.map(question =>
+                            this.convertFromSupabase(question)
+                        );
                         this.saveQuestions();
                         alert('题目数据导入成功！');
                     } else {
@@ -152,7 +220,6 @@ new Vue({
             if (confirm('确定要清空所有题目吗？此操作不可撤销！')) {
                 this.questions = [];
                 this.currentQuestionIndex = 0;
-                localStorage.removeItem('drill-questions');
             }
         },
 
@@ -199,18 +266,9 @@ new Vue({
         exportSingleQuestion(index) {
             const question = this.questions[index];
 
-            // 创建深拷贝并处理换行符
-            const questionToExport = JSON.parse(JSON.stringify(question));
-
-            // 将换行符转换为<br>标签
-            if (questionToExport.question) {
-                questionToExport.question = questionToExport.question.replace(/\n/g, '<br>');
-            }
-            if (questionToExport.analysis) {
-                questionToExport.analysis = questionToExport.analysis.replace(/\n/g, '<br>');
-            }
-            questionToExport.options = questionToExport.options.map(option =>
-                option ? option.replace(/\n/g, '<br>') : ''
+            // 使用转换方法
+            const questionToExport = this.convertToSupabase(
+                JSON.parse(JSON.stringify(question))
             );
 
             const questionJson = JSON.stringify(questionToExport, null, 2);
@@ -237,32 +295,18 @@ new Vue({
                 return;
             }
 
-            // 筛选题目
+            // 筛选题目并使用转换方法
             const questionsToExport = this.questions
                 .filter(question => question.id >= startNum)
-                .map(question => {
-                    // 创建深拷贝并处理换行符
-                    const processedQuestion = JSON.parse(JSON.stringify(question));
-
-                    if (processedQuestion.question) {
-                        processedQuestion.question = processedQuestion.question.replace(/\n/g, '<br>');
-                    }
-                    if (processedQuestion.analysis) {
-                        processedQuestion.analysis = processedQuestion.analysis.replace(/\n/g, '<br>');
-                    }
-                    processedQuestion.options = processedQuestion.options.map(option =>
-                        option ? option.replace(/\n/g, '<br>') : ''
-                    );
-
-                    return processedQuestion;
-                });
+                .map(question =>
+                    this.convertToSupabase(JSON.parse(JSON.stringify(question)))
+                );
 
             if (questionsToExport.length === 0) {
                 alert(`没有找到题号 ${startNum} 及之后的题目！`);
                 return;
             }
 
-            // 如果有多个题目，用逗号分隔；如果只有一个题目，直接导出对象
             let exportContent;
             if (questionsToExport.length === 1) {
                 exportContent = JSON.stringify(questionsToExport[0], null, 2);
@@ -290,28 +334,6 @@ new Vue({
                 5: '作战环境'
             };
             return typeNames[type] || '未知';
-        },
-
-
-        async syncToSupabase() {
-            if (this.syncing) return;          // 节流
-            this.syncing = true;
-            this.syncError = null;
-            try {
-                const supabase = await this.getSupabase();
-                const { error } = await supabase
-                    .from('questions')
-                    .upsert(this.questions, { onConflict: 'id' });
-                if (error) throw error;
-                this.$message?.success?.('已同步到 Supabase！') || alert('已同步到 Supabase！');
-            } catch (e) {
-                this.syncError = e.message;
-                console.error('同步失败:', e);
-                this.$message?.error?.('同步失败：' + e.message) || alert('同步失败：' + e.message);
-            } finally {
-                this.syncing = false;
-            }
         }
-
     }
 });
