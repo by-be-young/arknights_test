@@ -92,6 +92,13 @@
                             </div>
 
                             <div class="form-group full-width">
+                                <label>关键词 (用逗号分隔):</label>
+                                <input type="text" v-model="question.keywordsInput" placeholder="例如: 干员,部署,技能"
+                                    @blur="updateKeywords(question)">
+                                <small style="color: #666; font-size: 0.8rem;">输入多个关键词时用逗号分隔</small>
+                            </div>
+
+                            <div class="form-group full-width">
                                 <label>题目:</label>
                                 <textarea v-model="question.question" rows="3"></textarea>
                             </div>
