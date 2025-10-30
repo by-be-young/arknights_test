@@ -19,7 +19,10 @@ class DatabaseManager {
                 console.error('获取题目失败:', error);
                 return [];
             }
-            return data || [];
+            return (data || []).map(question => ({
+                ...question,
+                keywords: question.keywords || [] // 确保 keywords 字段存在
+            }));
         } catch (error) {
             console.error('获取题目异常:', error);
             return [];
@@ -29,6 +32,8 @@ class DatabaseManager {
     async getTrainingQuestions() {
         try {
             const supabase = this.getSupabase();
+            console.log('开始获取培训题目...');
+
             const { data, error } = await supabase
                 .from('training_questions')
                 .select('*')
@@ -38,6 +43,8 @@ class DatabaseManager {
                 console.error('获取训练题目失败:', error);
                 return [];
             }
+
+            console.log('成功获取培训题目:', data);
             return data || [];
         } catch (error) {
             console.error('获取训练题目异常:', error);
