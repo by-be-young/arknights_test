@@ -48,6 +48,9 @@
                 <div class="nav-item" :class="{ active: currentPage === 'wrong' }" @click="goToPage('wrong')">
                     <i class="fas fa-exclamation-triangle"></i><span>错题辑录</span>
                 </div>
+                <div class="nav-item" :class="{ active: currentPage === 'search' }" @click="goToPage('search')">
+                    <i class="fas fa-search"></i><span>题目搜索</span>
+                </div>
                 <div class="nav-item admin-only" @click="goToPage('admin')" style="display: none;">
                     <i class="fas fa-cog"></i><span>管理员面板</span>
                 </div>
@@ -129,6 +132,11 @@
                         <div class="card-icon"><i class="fas fa-exclamation-triangle"></i></div>
                         <h3 class="card-title">错题辑录</h3>
                         <p class="card-description">查看和分析答错的题目，针对性复习薄弱环节。</p>
+                    </div>
+                    <div class="dashboard-card" @click="goToPage('search')">
+                        <div class="card-icon"><i class="fas fa-search"></i></div>
+                        <h3 class="card-title">题目搜索</h3>
+                        <p class="card-description">通过关键词搜索题目，快速定位相关知识点。</p>
                     </div>
                 </div>
             </div>
@@ -313,6 +321,87 @@
                     </div>
                 </div>
             </div>
+            <!-- 题目搜索页面 -->
+            <div v-if="currentPage === 'search'">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">题目搜索</h1>
+                        <p class="page-subtitle">通过关键词搜索题目，快速定位相关知识点</p>
+                    </div>
+                    <button class="back-btn" @click="goToPage('index')"><i class="fas fa-arrow-left"></i> 返回首页</button>
+                </div>
+
+                <div class="search-container">
+                    <!-- 搜索输入区域 -->
+                    <div class="search-input-section">
+                        <div class="search-input-container">
+                            <input type="text" v-model="searchKeyword" placeholder="输入关键词搜索题目..." class="search-input"
+                                @input="performSearch">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+                        <div class="search-stats" v-if="searchKeyword">
+                            找到 {{ searchResults.length }} 个结果
+                        </div>
+                    </div>
+
+                    <!-- 搜索结果区域 -->
+                    <div class="search-results-section" v-if="searchResults.length > 0">
+                        <div class="results-grid">
+                            <div v-for="result in searchResults" :key="result.id" class="result-card"
+                                @click="goToSearchResult(result.id)">
+                                <div class="result-header">
+                                    <div class="result-meta">
+                                        <span class="result-id">题目 {{ result.id }}</span>
+                                        <span class="result-type"
+                                            :style="{ backgroundColor: getTypeColor(result.type) }">
+                                            {{ getTypeText(result.type) }}
+                                        </span>
+                                        <span class="result-difficulty"
+                                            :style="{ backgroundColor: getDifficultyColor(result.difficulty) }">
+                                            {{ getDifficultyText(result.difficulty) }}
+                                        </span>
+                                    </div>
+                                    <div class="result-keywords">
+                                        <i class="fas fa-tags"></i>
+                                        <span v-for="keyword in result.keywords" :key="keyword" class="keyword-tag">
+                                            {{ keyword }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="result-question">
+                                    {{ truncateQuestion(result.question) }}
+                                </div>
+                                <div class="result-footer">
+                                    <span class="result-source" v-if="result.resource">
+                                        <i class="fas fa-map-marker-alt"></i> {{ result.resource }}
+                                    </span>
+                                    <button class="result-action-btn">
+                                        <i class="fas fa-play"></i> 开始练习
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 无结果提示 -->
+                    <div v-else-if="searchKeyword" class="no-results-section">
+                        <div class="no-results-content">
+                            <i class="fas fa-search"
+                                style="font-size: 4rem; color: var(--text-muted); margin-bottom: 20px;"></i>
+                            <h3>没有找到相关题目</h3>
+                            <p>尝试使用其他关键词搜索，或检查拼写是否正确</p>
+                            <div class="search-suggestions">
+                                <h4>搜索建议：</h4>
+                                <ul>
+                                    <li>使用更具体的关键词</li>
+                                    <li>尝试使用题目类型或难度作为关键词</li>
+                                    <li>检查关键词拼写</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- 管理员面板页面 -->
             <div v-if="currentPage === 'admin'">
@@ -459,10 +548,9 @@
 
     <!-- 业务脚本 -->
     <!-- <script src="js/questions.js"></script> -->
-    <script src="js/training-questions.js"></script>
+    <!-- <script src="js/training-questions.js"></script> -->
     <script src="js/update-notices.js"></script>
     <script src="js/app.js"></script>
 </body>
 
 </html>
-
