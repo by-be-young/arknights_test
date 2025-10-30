@@ -36,7 +36,11 @@ new Vue({
         authUsername: '',
         authPassword: '',
         questionStats: {}, // 存储题目统计信息
-        examStats: { totalAttempts: 0, averageScore: 0 } // 考试统计
+        examStats: { totalAttempts: 0, averageScore: 0 }, // 考试统计
+
+
+        searchKeyword: '',
+        searchResults: [],
     },
     computed: {
         hasPrevQuestion() {
@@ -101,29 +105,80 @@ new Vue({
         }
     },
     async mounted() {
-        await this.loadQuestions();
-        this.updateCategories();
-        this.loadTrainingQuestions();
-        this.loadTrainingRecords();
-        this.loadWrongQuestions();
-        this.loadSystemData();
-        this.loadExamStats();
+        try {
+            await this.loadQuestions();
+            this.updateCategories();
 
-        // 点击侧边栏外部关闭侧边栏
-        document.addEventListener('click', (event) => {
-            const sidebar = document.querySelector('.sidebar');
-            const menuToggle = document.querySelector('.mobile-menu-toggle');
+            // 立即加载培训题目
+            await this.loadTrainingQuestions();
+            console.log('培训题目数量:', this.trainingQuestions.length);
 
-            if (this.sidebarOpen &&
-                sidebar &&
-                menuToggle &&
-                !sidebar.contains(event.target) &&
-                !menuToggle.contains(event.target)) {
-                this.sidebarOpen = false;
-            }
-        });
+            // 确保界面更新
+            this.$forceUpdate();
+
+            this.loadTrainingRecords();
+            this.loadWrongQuestions();
+            this.loadSystemData();
+            this.loadExamStats();
+
+            // 设置加载完成标志
+            this.trainingQuestionsLoaded = true;
+
+            // 点击侧边栏外部关闭侧边栏
+            document.addEventListener('click', (event) => {
+                const sidebar = document.querySelector('.sidebar');
+                const menuToggle = document.querySelector('.mobile-menu-toggle');
+
+                if (this.sidebarOpen &&
+                    sidebar &&
+                    menuToggle &&
+                    !sidebar.contains(event.target) &&
+                    !menuToggle.contains(event.target)) {
+                    this.sidebarOpen = false;
+                }
+            });
+        } catch (error) {
+            console.error('应用初始化失败:', error);
+        }
     },
     methods: {
+        // 执行搜索
+        performSearch() {
+            if (!this.searchKeyword.trim()) {
+                this.searchResults = [];
+                return;
+            }
+
+            const keyword = this.searchKeyword.toLowerCase().trim();
+            this.searchResults = this.rawQuestions.filter(question => {
+                // 检查关键词匹配
+                const hasKeyword = question.keywords &&
+                    question.keywords.some(kw =>
+                        kw.toLowerCase().includes(keyword)
+                    );
+
+                // 检查题干匹配
+                const inQuestion = question.question &&
+                    question.question.toLowerCase().includes(keyword);
+
+                return hasKeyword || inQuestion;
+            });
+        },
+
+        // 截断过长的题干
+        truncateQuestion(question) {
+            // 移除HTML标签和换行符
+            const text = question.replace(/<br>/g, ' ').replace(/<[^>]*>/g, '');
+            return text.length > 120 ? text.substring(0, 120) + '...' : text;
+        },
+
+        // 跳转到搜索结果题目
+        goToSearchResult(questionId) {
+            this.goToQuestion(questionId, 'practice');
+        },
+
+
+
         /* 新增：统一拉题库 */
         async loadQuestions() {
             if (!window.dbManager) return
@@ -148,6 +203,7 @@ new Vue({
             this.sidebarOpen = !this.sidebarOpen;
         },
 
+        // 在页面跳转时重置搜索
         goToPage(page) {
             this.currentPage = page;
             this.selectedOption = null;
@@ -157,8 +213,10 @@ new Vue({
                 this.updateCategories();
             } else if (page === 'wrong') {
                 this.updateWrongCategories();
-            } else if (page === 'training') {
-                this.loadTrainingQuestions();
+            } else if (page === 'search') {
+                // 进入搜索页面时重置搜索状态
+                this.searchKeyword = '';
+                this.searchResults = [];
             }
         },
 
@@ -326,15 +384,59 @@ new Vue({
             }
         },
 
+        // 修改 loadTrainingQuestions 方法，确保正确处理数据
+        async loadTrainingQuestions() {
+            if (!window.dbManager) {
+                console.warn('dbManager 未初始化，无法加载培训题目');
+                this.trainingQuestions = []; // 确保设置为空数组
+                return;
+            }
+
+            try {
+                const rawData = await window.dbManager.getTrainingQuestions();
+                console.log('从数据库获取的培训题目:', rawData);
+
+                if (!rawData || rawData.length === 0) {
+                    console.warn('数据库返回的培训题目为空');
+                    this.trainingQuestions = [];
+                    return;
+                }
+
+                // 映射数据库字段到前端期望的格式
+                this.trainingQuestions = rawData.map(item => ({
+                    id: item.id,
+                    question: item.question,
+                    options: item.options || ['', '', '', ''],
+                    answer: item.answer,
+                    analysis: item.analysis,
+                    picture: item.picture || false,
+                    resource: item.resource || ''  // 确保包含 resource 字段
+                }));
+
+                console.log('培训题目加载成功，共', this.trainingQuestions.length, '题');
+                console.log('培训题目详情:', this.trainingQuestions);
+
+                // 确保更新界面显示
+                this.$forceUpdate();
+            } catch (error) {
+                console.error('加载培训题目失败:', error);
+                // 设置空数组避免undefined错误
+                this.trainingQuestions = [];
+            }
+        },
+
+        // 同时修改 goToTrainingQuestion 方法，确保能正确处理题目
         goToTrainingQuestion(id) {
+            console.log('跳转到培训题目:', id, '可用题目:', this.trainingQuestions);
+
             this.questionMode = 'training';
-            const question = window.trainingQuestions.find(q => q.id === id);
+            const question = this.trainingQuestions.find(q => q.id === id);
             if (question) {
                 this.currentQuestion = {
                     ...question,
                     typeText: '入职培训',
                     difficultyText: '入门',
-                    resource: '',
+                    resource: question.resource || '',
                     question: this.fmtQuestion(question.question),
                     options: question.options ? question.options.map(opt => opt || '') : ['', '', '', ''],
                     analysis: this.fmtQuestion(question.analysis),
@@ -343,6 +445,10 @@ new Vue({
                 this.currentPage = 'question';
                 this.selectedOption = null;
                 this.showAnswer = false;
+                console.log('成功加载题目:', this.currentQuestion);
+            } else {
+                console.error('未找到培训题目:', id, '可用题目ID:', this.trainingQuestions.map(q => q.id));
+                alert('题目不存在！');
             }
         },
 
@@ -587,7 +693,7 @@ new Vue({
         getPrevTrainingQuestion() {
             if (!this.currentQuestion) return null;
             const currentId = this.currentQuestion.id;
-            const prevQuestions = window.trainingQuestions
+            const prevQuestions = this.trainingQuestions
                 .filter(q => q.id < currentId)
                 .sort((a, b) => b.id - a.id);
             return prevQuestions.length > 0 ? prevQuestions[0].id : null;
@@ -596,7 +702,7 @@ new Vue({
         getNextTrainingQuestion() {
             if (!this.currentQuestion) return null;
             const currentId = this.currentQuestion.id;
-            const nextQuestions = window.trainingQuestions
+            const nextQuestions = this.trainingQuestions
                 .filter(q => q.id > currentId)
                 .sort((a, b) => a.id - b.id);
             return nextQuestions.length > 0 ? nextQuestions[0].id : null;
@@ -680,7 +786,7 @@ new Vue({
             // 处理G+题号格式（入职培训）
             if (input.toUpperCase().startsWith('G')) {
                 const id = parseInt(input.substring(1));
-                const total = window.trainingQuestions ? window.trainingQuestions.length : 0;
+                const total = this.trainingQuestions ? this.trainingQuestions.length : 0;
                 if (id >= 1 && id <= total) {
                     this.questionMode = 'training';
                     this.goToTrainingQuestion(id);
@@ -698,7 +804,7 @@ new Vue({
                     this.loadQuestionById(id);
                     this.currentPage = 'question';
                 } else {
-                    alert('请输入有效的题目ID（1-' + total + '）或入职培训题目ID（G1-G' + (window.trainingQuestions ? window.trainingQuestions.length : 0) + '）');
+                    alert('请输入有效的题目ID（1-' + total + '）或入职培训题目ID（G1-G' + (this.trainingQuestions ? this.trainingQuestions.length : 0) + '）');
                 }
             }
         },
@@ -721,12 +827,7 @@ new Vue({
             }
         },
 
-        // 入职培训相关方法
-        loadTrainingQuestions() {
-            if (window.trainingQuestions) {
-                this.trainingQuestions = window.trainingQuestions;
-            }
-        },
+
 
         loadTrainingRecords() {
             const records = localStorage.getItem('trainingRecords');
@@ -746,7 +847,7 @@ new Vue({
         },
 
         goToFirstUnansweredTraining() {
-            const unanswered = window.trainingQuestions.find(q => !this.trainingRecords[q.id]);
+            const unanswered = this.trainingQuestions.find(q => !this.trainingRecords[q.id]);
             if (unanswered) {
                 this.goToTrainingQuestion(unanswered.id);
             } else {
