@@ -630,11 +630,18 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // 加载并显示当前用户的历史统计（来自 Supabase）
 async function loadUserStats() {
+    // 重试机制：若 supabase 或 auth 未就绪，则最多重试 10 次
     try {
-        const sb = window.getSupabase();
-        const userId = window.authManager?.currentUser?.id || null;
+        window._gameLoadUserStatsAttempts = window._gameLoadUserStatsAttempts || 0;
+        const sb = window.getSupabase && window.getSupabase();
+        const userId = window.authManager && window.authManager.currentUser && window.authManager.currentUser.id;
         if (!sb || !userId) {
-            // 未登录或 supabase 未就绪，显示会话统计或 0
+            window._gameLoadUserStatsAttempts++;
+            if (window._gameLoadUserStatsAttempts <= 10) {
+                setTimeout(loadUserStats, 300);
+                return;
+            }
+            // 超过重试次数，回退到会话统计显示
             winRateEl.textContent = totalGames ? Math.round((winGames / totalGames) * 100) + '%' : '0%';
             avgHintsEl.textContent = winGames ? (hintsUsedForCorrect / winGames).toFixed(1) : '0';
             return;
@@ -643,6 +650,9 @@ async function loadUserStats() {
         const { data, error } = await sb.from('game_history').select('attempts, correct_count, hints_used').eq('user_id', userId);
         if (error) {
             console.error('加载用户历史统计失败', error);
+            // 显示会话统计作为回退
+            winRateEl.textContent = totalGames ? Math.round((winGames / totalGames) * 100) + '%' : '0%';
+            avgHintsEl.textContent = winGames ? (hintsUsedForCorrect / winGames).toFixed(1) : '0';
             return;
         }
         if (!data || data.length === 0) {
@@ -657,6 +667,8 @@ async function loadUserStats() {
 
         winRateEl.textContent = totalAttempts ? Math.round((totalCorrect / totalAttempts) * 100) + '%' : '0%';
         avgHintsEl.textContent = avgHints ? avgHints.toFixed(1) : '0';
+        // 重置尝试计数器
+        window._gameLoadUserStatsAttempts = 0;
     } catch (e) {
         console.error('loadUserStats 异常', e);
     }
