@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Operators 编辑器（game）</title>
+    <link rel="icon" href="images/32.png" type="image/png">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --accent: #2b6cb0;
+            --muted: #6b7280;
+            --bg: #f7fafc;
+            --card: #ffffff;
+            --border: #e6eef8;
+            --success: #10b981;
+            --danger: #e53e3e;
+            --shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+        }
+
+        html,
+        body {
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        body {
+            padding: 12px;
+            font-family: Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+            background: #f7fafc;
+            color: #111;
+            min-height: 100vh;
+        }
+
+        h2 {
+            margin: 0 0 12px 0
+        }
+
+        .container {
+            display: flex;
+            gap: 16px
+        }
+
+        .container {
+            display: flex;
+            gap: 16px;
+            height: 85vh;
+            /* 占据视口 85% */
+        }
+
+        .list {
+            width: 340px;
+            border-radius: 10px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 10px;
+            height: 100%;
+            overflow: auto;
+            box-shadow: var(--shadow);
+        }
+
+        .editor {
+            flex: 1;
+            border-radius: 10px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 18px;
+            height: 100%;
+            overflow: auto;
+            box-shadow: var(--shadow);
+        }
+
+        .group {
+            margin-bottom: 14px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #fbfdff;
+            border: 1px solid var(--border);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .form-row label {
+            margin-bottom: 0;
+        }
+
+        .checkbox-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* 美化复选框与其容器 */
+        .checkbox-grid label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: linear-gradient(180deg, rgba(250, 252, 255, 1), rgba(245, 249, 255, 1));
+            border: 1px solid rgba(203, 213, 224, 0.6);
+            color: #0f172a;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+
+        .checkbox-grid label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+        }
+
+        .checkbox-grid input[type=checkbox] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            accent-color: var(--accent);
+            flex: 0 0 auto;
+        }
+
+        /* chip button (replacement for checkboxes) */
+        .checkbox-grid .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: linear-gradient(180deg, #fbfdff, #f7fbff);
+            border: 1px solid rgba(203, 213, 224, 0.6);
+            color: #0f172a;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 140ms ease;
+            user-select: none;
+        }
+
+        .checkbox-grid .chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+        }
+
+        .checkbox-grid .chip:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.08);
+        }
+
+        .checkbox-grid .chip.selected {
+            border-color: var(--accent);
+            background: linear-gradient(90deg, rgba(43, 108, 176, 0.08), rgba(37, 99, 235, 0.04));
+            color: #0b3b66;
+            box-shadow: 0 8px 22px rgba(37, 99, 235, 0.08);
+            transform: translateY(-2px);
+        }
+
+        button {
+            margin-right: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(16, 24, 40, 0.06);
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(11, 15, 26, 0.04);
+            transition: transform .12s ease, box-shadow .12s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+        }
+
+        button.primary {
+            background: linear-gradient(90deg, var(--accent), #2563eb);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);
+        }
+
+        button.danger {
+            background: #fff;
+            color: var(--danger);
+            border-color: rgba(229, 62, 62, 0.12);
+        }
+
+        input[type=text] {
+            padding: 8px 10px;
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            border-radius: 8px;
+            background: #fbfdff;
+        }
+
+        label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .op-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            background: transparent;
+            transition: background .12s ease, transform .08s ease;
+        }
+
+        .op-btn:hover {
+            background: rgba(43, 108, 176, 0.04);
+            transform: translateX(4px);
+        }
+
+        .op-btn.selected {
+            background: linear-gradient(90deg, rgba(43, 108, 176, 0.08), transparent);
+            border-color: rgba(43, 108, 176, 0.12);
+        }
+
+        textarea {
+            width: 100%;
+            height: calc(28vh);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            background: #fbfdff;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Segoe UI Mono', 'Roboto Mono', 'Noto Mono', monospace;
+        }
+
+        /* 微调标题与分组 */
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 10px
+        }
+
+        .group strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px
+        }
+
+        .toolbar {
+            margin-bottom: 12px
+        }
+
+        .small {
+            font-size: 13px;
+            color: var(--muted)
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Operators 编辑器（供 game.html 使用）</h2>
+    <div class="toolbar">
+        <button id="btnLoadRemote">加载 js/operators.js</button>
+        <input type="file" id="fileInput" accept=".js">
+        <button id="btnNew">新增词条</button>
+        <button id="btnExport" class="primary">导出为 JS 并复制到剪贴板</button>
+        <button id="btnWriteFile" class="primary">写入 js/operators.js（覆盖）</button>
+        <span class="small">（推荐在 Chromium 浏览器使用；会弹出选择文件对话框）</span>
+    </div>
+    <div class="container">
+        <div class="list">
+            <ul id="opList"></ul>
+        </div>
+        <div class="editor">
+            <div class="group form-row">
+                <label>名称: <input id="name" type="text"></label>
+                <label>职业1: <input id="job1" type="text"></label>
+                <label>职业2: <input id="job2" type="text"></label>
+            </div>
+
+            <div class="group">
+                <strong>特性 — 部署位置</strong>
+                <div id="deployPos" class="checkbox-grid"></div>
+            </div>
+            <div class="group">
+                <strong>特性 — 伤害类型</strong>
+                <div id="damageTypes" class="checkbox-grid"></div>
+            </div>
+
+            <div class="group">
+                <strong>特性 — 技能类型</strong>
+                <div id="skillTypes" class="checkbox-grid"></div>
+            </div>
+
+            <div class="group">
+                <strong>特性 — 限定干员</strong>
+                <div id="limitedTypes" class="checkbox-grid"></div>
+            </div>
+
+            <div class="group">
+                <strong>特性 — 有无异格</strong>
+                <div id="hasYige" class="checkbox-grid"></div>
+            </div>
+
+            <div class="group">
+                <strong>特性 — 可部署召唤物</strong>
+                <div id="deployableSummon" class="checkbox-grid"></div>
+            </div>
+
+            <div class="group">
+                <strong>特性 — 特限模组/特勤模组</strong>
+                <div id="specialModule" class="checkbox-grid"></div>
+            </div>
+
+            <div class="group">
+                <strong>自身能力 — 生存能力</strong>
+                <div id="selfSurvive" class="checkbox-grid"></div>
+            </div>
+            <div class="group">
+                <strong>自身能力 — 特殊被选中效果</strong>
+                <div id="selfSpecial" class="checkbox-grid"></div>
+            </div>
+
+            <div class="group">
+                <strong>辅助能力 — 保人能力</strong>
+                <div id="assistHeal" class="checkbox-grid"></div>
+            </div>
+            <div class="group">
+                <strong>辅助能力 — 增益能力</strong>
+                <div id="assistBuff" class="checkbox-grid"></div>
+            </div>
+            <div class="group">
+                <strong>辅助能力 — 削弱能力</strong>
+                <div id="assistDebuff" class="checkbox-grid"></div>
+            </div>
+            <div class="group">
+                <strong>辅助能力 — 控制能力</strong>
+                <div id="assistControl" class="checkbox-grid"></div>
+            </div>
+
+            <div class="group">
+                <button id="btnSave" class="primary">保存当前</button>
+                <button id="btnDelete" class="danger">删除当前</button>
+            </div>
+            <div class="group">
+                <strong>导出结果（可手动复制粘贴到 js/operators.js）</strong>
+                <textarea id="exportResult" readonly></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/game-editor.js"></script>
+</body>
+
+</html>

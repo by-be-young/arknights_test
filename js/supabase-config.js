@@ -37,3 +37,36 @@ window.SUPABASE_CONFIG = {
     SUPABASE_URL,
     SUPABASE_ANON_KEY
 };
+
+// 将游戏历史保存到 Supabase 的辅助函数
+async function saveGameHistory(userId, stats) {
+    try {
+        const sb = window.getSupabase();
+        if (!sb) {
+            console.warn('Supabase 客户端未就绪，无法保存历史记录');
+            return null;
+        }
+
+        const payload = {
+            user_id: userId || null,
+            attempts: stats.attempts || 0,
+            correct_count: stats.correct_count || 0,
+            accuracy: typeof stats.accuracy === 'number' ? stats.accuracy : 0,
+            avg_hints_correct: typeof stats.avg_hints_correct === 'number' ? stats.avg_hints_correct : 0,
+            created_at: new Date().toISOString()
+        };
+
+        const { data, error } = await sb.from('game_history').insert([payload]);
+        if (error) {
+            console.error('保存游戏历史到 Supabase 失败：', error);
+            return { error };
+        }
+        console.log('已保存游戏历史到 Supabase', data);
+        return { data };
+    } catch (err) {
+        console.error('保存游戏历史发生异常：', err);
+        return { error: err };
+    }
+}
+
+window.saveGameHistory = saveGameHistory;

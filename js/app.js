@@ -137,11 +137,60 @@ new Vue({
                     this.sidebarOpen = false;
                 }
             });
+            // 监听登录后的重定向标记（当用户在弹窗登录成功后，会设置 window._postAuthRedirect）
+            setInterval(() => {
+                try {
+                    const redirect = window._postAuthRedirect;
+                    const hasUser = window.authManager && window.authManager.currentUser;
+                    if (redirect && hasUser) {
+                        // 清除标记
+                        window._postAuthRedirect = null;
+                        // 兼容旧字符串 'game'
+                        if (redirect === 'game') {
+                            window.location.href = 'game.html';
+                            return;
+                        }
+                        if (typeof redirect === 'object') {
+                            if (redirect.type === 'page' && redirect.page) {
+                                // 在 SPA 内部导航
+                                this.goToPage(redirect.page);
+                                if (redirect.page === 'question' && redirect.id) {
+                                    this.goToQuestion(redirect.id, redirect.mode || 'practice');
+                                }
+                            } else if (redirect.type === 'open' && redirect.url) {
+                                window.open(redirect.url, '_blank');
+                            } else if (redirect.type === 'navigate' && redirect.url) {
+                                window.location.href = redirect.url;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            }, 500);
         } catch (error) {
             console.error('应用初始化失败:', error);
         }
     },
     methods: {
+        // 如果目标页面需要登录，调用此方法进行统一检查并显示登录弹窗
+        requireLogin(redirect) {
+            try {
+                const isLoggedIn = window.authManager && window.authManager.isLoggedIn && window.authManager.isLoggedIn();
+                if (isLoggedIn) return true;
+                // 未登录：显示登录弹窗并记录重定向目标
+                this.showAuthModal = true;
+                this.authMode = 'login';
+                window._postAuthRedirect = redirect || { type: 'page', page: 'index' };
+                return false;
+            } catch (e) {
+                // 保守处理：如果发生异常则弹窗并阻止操作
+                this.showAuthModal = true;
+                this.authMode = 'login';
+                window._postAuthRedirect = redirect || { type: 'page', page: 'index' };
+                return false;
+            }
+        },
         // 执行搜索
         performSearch() {
             if (!this.searchKeyword.trim()) {
@@ -177,6 +226,37 @@ new Vue({
             this.goToQuestion(questionId, 'practice');
         },
 
+        goToQuestion(questionId, mode) {
+            // 进入题目页面也要求登录
+            const ok = this.requireLogin({ type: 'page', page: 'question', id: questionId, mode });
+            if (!ok) return;
+            // 原有逻辑：加载并跳转
+            const question = this.rawQuestions.find(q => q.id === questionId);
+            if (question) {
+                this.currentQuestion = {
+                    ...question,
+                    typeText: this.getTypeText(question.type),
+                    difficultyText: this.getDifficultyText(question.difficulty),
+                    resource: question.resource || '',
+                    question: this.fmtQuestion(question.question),
+                    options: question.options ? question.options.map(opt => opt || '') : ['', '', '', ''],
+                    analysis: this.fmtQuestion(question.analysis)
+                };
+
+                if (mode === 'practice') {
+                    this.currentQuestionIndex = this.rawQuestions.findIndex(q => q.id === questionId);
+                } else if (mode === 'random') {
+                    this.randomHistory.push(questionId);
+                    this.randomCurrentIndex = this.randomHistory.length - 1;
+                }
+
+                this.questionMode = mode || 'practice';
+                this.currentPage = 'question';
+                this.selectedOption = null;
+                this.showAnswer = false;
+            }
+        },
+
 
 
         /* 新增：统一拉题库 */
@@ -205,6 +285,12 @@ new Vue({
 
         // 在页面跳转时重置搜索
         goToPage(page) {
+            // 所有子页面（非首页）都需要登录
+            if (page !== 'index') {
+                const ok = this.requireLogin({ type: 'page', page });
+                if (!ok) return;
+            }
+
             this.currentPage = page;
             this.selectedOption = null;
             this.showAnswer = false;
@@ -225,7 +311,11 @@ new Vue({
                 questions: 'editor.html',
                 training: 'training-editor.html'
             };
-            window.open(map[type], '_blank');
+            const url = map[type];
+            if (!url) return;
+            const ok = this.requireLogin({ type: 'open', url });
+            if (!ok) return;
+            window.open(url, '_blank');
         },
 
         // 获取题目统计信息
@@ -356,34 +446,6 @@ new Vue({
             this.wrongCategories = updatedCategories;
         },
 
-        goToQuestion(id, mode) {
-            this.questionMode = mode;
-            const question = this.rawQuestions.find(q => q.id === id);
-            if (question) {
-                this.currentQuestion = {
-                    ...question,
-                    typeText: this.getTypeText(question.type),
-                    difficultyText: this.getDifficultyText(question.difficulty),
-                    // 直接使用 resource 字段
-                    resource: question.resource || '',
-                    question: this.fmtQuestion(question.question),
-                    options: question.options ? question.options.map(opt => opt || '') : ['', '', '', ''],
-                    analysis: this.fmtQuestion(question.analysis)
-                };
-
-                if (mode === 'practice') {
-                    this.currentQuestionIndex = this.rawQuestions.findIndex(q => q.id === id);
-                } else if (mode === 'random') {
-                    this.randomHistory.push(id);
-                    this.randomCurrentIndex = this.randomHistory.length - 1;
-                }
-
-                this.currentPage = 'question';
-                this.selectedOption = null;
-                this.showAnswer = false;
-            }
-        },
-
         // 修改 loadTrainingQuestions 方法，确保正确处理数据
         async loadTrainingQuestions() {
             if (!window.dbManager) {
@@ -427,6 +489,9 @@ new Vue({
 
         // 同时修改 goToTrainingQuestion 方法，确保能正确处理题目
         goToTrainingQuestion(id) {
+            // 进入培训题目需要登录
+            const ok = this.requireLogin({ type: 'page', page: 'question', id: id, mode: 'training' });
+            if (!ok) return;
             console.log('跳转到培训题目:', id, '可用题目:', this.trainingQuestions);
 
             this.questionMode = 'training';
@@ -453,6 +518,9 @@ new Vue({
         },
 
         goToWrongQuestion(id) {
+            // 进入错题页面需要登录
+            const ok = this.requireLogin({ type: 'page', page: 'question', id: id, mode: 'wrong' });
+            if (!ok) return;
             this.questionMode = 'wrong';
             const question = this.rawQuestions.find(q => q.id === id);
             if (question) {
@@ -772,6 +840,9 @@ new Vue({
         },
 
         startRandom() {
+            // 随机出题前需登录
+            const ok = this.requireLogin({ type: 'page', page: 'question', mode: 'random' });
+            if (!ok) return;
             const randomIndex = Math.floor(Math.random() * this.rawQuestions.length);
             const question = this.rawQuestions[randomIndex];
             this.questionMode = 'random';
@@ -781,6 +852,9 @@ new Vue({
         },
 
         startJump() {
+            // 跳转到指定题目前需登录
+            const okJump = this.requireLogin({ type: 'page', page: 'question', mode: 'jump' });
+            if (!okJump) return;
             const input = this.jumpQuestionId.trim();
 
             // 处理G+题号格式（入职培训）
@@ -814,6 +888,9 @@ new Vue({
         },
 
         startExam() {
+            // 开始考试需要登录
+            const ok = this.requireLogin({ type: 'navigate', url: 'exam.html' });
+            if (!ok) return;
             window.location.href = 'exam.html';
         },
 

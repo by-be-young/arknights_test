@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>明日方舟猜猜看</title>
+    <link rel="stylesheet" href="./css/game.css">
+</head>
+
+<body>
+    <div class="game-container">
+        <div class="left-panel">
+            <div class="header">
+                <h1>明日方舟猜猜看</h1>
+                <p class="tutorial">右键排除，左键选择，点击"提交"确认答案</p>
+            </div>
+            <div class="operators-grid" id="operatorsGrid"></div>
+        </div>
+        <div class="right-panel">
+            <div class="stats">
+                <div>第 <span id="currentHint">0</span> 条提示</div>
+                <div>正确率: <span id="winRate">0%</span></div>
+                <div>平均提示数: <span id="avgHints">0</span></div>
+            </div>
+            <div class="hint-area">
+                <h3>提示信息</h3>
+                <div id="hintText">点击"开始游戏"开始</div>
+                <div id="hintDetails" class="hint-details"></div>
+            </div>
+            <div class="controls">
+                <button id="startBtn">开始游戏</button>
+                <button id="nextHintBtn" disabled>下一条提示</button>
+                <button id="submitBtn" disabled>提交</button>
+                <button id="showAllHintsBtn">查看目前所有已知提示</button>
+            </div>
+            <div id="allHintsPanel" class="all-hints-panel"
+                style="display:none; margin-top:8px; max-height:220px; overflow:auto;">
+                <h4>全部已生成提示</h4>
+                <div id="allHintsList"></div>
+            </div>
+            <div id="resultArea" class="result-area"></div>
+        </div>
+    </div>
+    <script src="./js/operators.js"></script>
+    <script src="./js/game.js"></script>
+</body>
+
+</html>

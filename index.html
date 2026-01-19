@@ -42,6 +42,9 @@
                 <div class="nav-item" :class="{ active: currentPage === 'quickjump' }" @click="goToPage('quickjump')">
                     <i class="fas fa-forward"></i><span>快速跳题</span>
                 </div>
+                <div class="nav-item" id="sidebarGameBtn" style="cursor: pointer;">
+                    <i class="fas fa-gamepad"></i><span>六星干员猜猜看</span>
+                </div>
                 <div class="nav-item" :class="{ active: currentPage === 'exam' }" @click="goToPage('exam')">
                     <i class="fas fa-file-alt"></i><span>全真模拟</span>
                 </div>
@@ -137,6 +140,11 @@
                         <div class="card-icon"><i class="fas fa-search"></i></div>
                         <h3 class="card-title">题目搜索</h3>
                         <p class="card-description">通过关键词搜索题目，快速定位相关知识点。</p>
+                    </div>
+                    <div class="dashboard-card" id="openGameBtn" style="cursor: pointer;">
+                        <div class="card-icon"><i class="fas fa-gamepad"></i></div>
+                        <h3 class="card-title">六星干员猜猜看</h3>
+                        <p class="card-description">基于干员特性猜测目标干员，练习观察与推理能力。</p>
                     </div>
                 </div>
             </div>
@@ -551,6 +559,42 @@
     <!-- <script src="js/training-questions.js"></script> -->
     <script src="js/update-notices.js"></script>
     <script src="js/app.js"></script>
+    <script>
+        // 页面加载后绑定游戏入口点击逻辑：未登录则触发 Vue 登录弹窗，登录后跳转到 game.html
+        document.addEventListener('DOMContentLoaded', function () {
+            const openBtn = document.getElementById('openGameBtn');
+            const sidebarBtn = document.getElementById('sidebarGameBtn');
+
+            function handleGameOpen() {
+                try {
+                    const isLoggedIn = window.authManager && window.authManager.isLoggedIn && window.authManager.isLoggedIn();
+                    if (!isLoggedIn) {
+                        const unauthBtn = document.querySelector('.update-notice-btn.unauth-only');
+                        if (unauthBtn) unauthBtn.click();
+                        window._postAuthRedirect = 'game';
+                        return;
+                    }
+                    window.location.href = 'game.html';
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            if (openBtn) openBtn.addEventListener('click', handleGameOpen);
+            if (sidebarBtn) sidebarBtn.addEventListener('click', handleGameOpen);
+
+            // 登录完成后如果存在重定向标记则跳转（轮询检测 authManager.currentUser 变化）
+            if (window.authManager) {
+                let lastUser = window.authManager.currentUser;
+                setInterval(() => {
+                    if (window._postAuthRedirect === 'game' && window.authManager.currentUser && window.authManager.currentUser !== lastUser) {
+                        window.location.href = 'game.html';
+                    }
+                    lastUser = window.authManager.currentUser;
+                }, 500);
+            }
+        });
+    </script>
 </body>
 
 </html>
