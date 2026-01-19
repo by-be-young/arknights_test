@@ -42,7 +42,8 @@
                 <div class="nav-item" :class="{ active: currentPage === 'quickjump' }" @click="goToPage('quickjump')">
                     <i class="fas fa-forward"></i><span>快速跳题</span>
                 </div>
-                <div class="nav-item" id="sidebarGameBtn" style="cursor: pointer;">
+                <div class="nav-item" :class="{ active: currentPage === 'game' }" id="sidebarGameBtn"
+                    style="cursor: pointer;" @click="goToPage('game')">
                     <i class="fas fa-gamepad"></i><span>六星干员猜猜看</span>
                 </div>
                 <div class="nav-item" :class="{ active: currentPage === 'exam' }" @click="goToPage('exam')">
@@ -141,7 +142,7 @@
                         <h3 class="card-title">题目搜索</h3>
                         <p class="card-description">通过关键词搜索题目，快速定位相关知识点。</p>
                     </div>
-                    <div class="dashboard-card" id="openGameBtn" style="cursor: pointer;">
+                    <div class="dashboard-card" id="openGameBtn" style="cursor: pointer;" @click="goToPage('game')">
                         <div class="card-icon"><i class="fas fa-gamepad"></i></div>
                         <h3 class="card-title">六星干员猜猜看</h3>
                         <p class="card-description">基于干员特性猜测目标干员，练习观察与推理能力。</p>
@@ -244,6 +245,52 @@
                             跳转到题目</button>
                     </div>
                 </div>
+            </div>
+
+            <!-- 干员猜猜看游戏主页（与考试页面风格一致） -->
+            <div v-if="currentPage === 'game'">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">六星干员猜猜看</h1>
+                        <p class="page-subtitle">轻量休闲玩法 · 练习观察与干员特性识别</p>
+                    </div>
+                    <button class="back-btn" @click="goToPage('index')"><i class="fas fa-arrow-left"></i> 返回首页</button>
+                </div>
+
+                <div class="dashboard-card exam-card">
+                    <div class="card-icon"><i class="fas fa-gamepad"></i></div>
+                    <h3 class="card-title">六星干员猜猜看</h3>
+                    <p class="card-description">轻量休闲玩法 · 练习观察与干员特性识别</p>
+
+                    <div class="question-stats" style="margin-top:20px;">
+                        <h4>全服统计</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">{{ globalGameStats.totalAttempts }}</div>
+                                <div class="stat-label">全站总游戏局数</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">{{ (globalGameStats.globalAccuracy*100).toFixed(1) }}%</div>
+                                <div class="stat-label">全站正确率</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">{{ globalGameStats.globalAvgHintsCorrect.toFixed(1) }}</div>
+                                <div class="stat-label">答对时平均提示数</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="exam-info">
+                        <div class="info-item"><i
+                                class="fas fa-info-circle"></i><span>系统会在候选池中随机抽取目标干员，并逐条发布线索（职业/特性/能力等）。</span></div>
+                        <div class="info-item"><i class="fas fa-database"></i><span>游戏记录将上传到
+                                Supabase，并可在个人资料中查看历史统计。</span></div>
+                    </div>
+
+                    <button class="nav-btn primary exam-start-btn" @click="startGameFromSPA"><i class="fas fa-play"></i>
+                        开始游戏</button>
+                </div>
+
             </div>
 
             <!-- 全真模拟页面 -->
@@ -559,42 +606,7 @@
     <!-- <script src="js/training-questions.js"></script> -->
     <script src="js/update-notices.js"></script>
     <script src="js/app.js"></script>
-    <script>
-        // 页面加载后绑定游戏入口点击逻辑：未登录则触发 Vue 登录弹窗，登录后跳转到 game.html
-        document.addEventListener('DOMContentLoaded', function () {
-            const openBtn = document.getElementById('openGameBtn');
-            const sidebarBtn = document.getElementById('sidebarGameBtn');
-
-            function handleGameOpen() {
-                try {
-                    const isLoggedIn = window.authManager && window.authManager.isLoggedIn && window.authManager.isLoggedIn();
-                    if (!isLoggedIn) {
-                        const unauthBtn = document.querySelector('.update-notice-btn.unauth-only');
-                        if (unauthBtn) unauthBtn.click();
-                        window._postAuthRedirect = 'game';
-                        return;
-                    }
-                    window.location.href = 'game.html';
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-
-            if (openBtn) openBtn.addEventListener('click', handleGameOpen);
-            if (sidebarBtn) sidebarBtn.addEventListener('click', handleGameOpen);
-
-            // 登录完成后如果存在重定向标记则跳转（轮询检测 authManager.currentUser 变化）
-            if (window.authManager) {
-                let lastUser = window.authManager.currentUser;
-                setInterval(() => {
-                    if (window._postAuthRedirect === 'game' && window.authManager.currentUser && window.authManager.currentUser !== lastUser) {
-                        window.location.href = 'game.html';
-                    }
-                    lastUser = window.authManager.currentUser;
-                }, 500);
-            }
-        });
-    </script>
+    <!-- 原生脚本移除：由 Vue 的 @click 和 startGameFromSPA / goToPage 管理跳转逻辑 -->
 </body>
 
 </html>

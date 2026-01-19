@@ -541,6 +541,26 @@ function submitAnswer() {
         hintsUsedForCorrect += currentHintIndex + 1;
     }
 
+    // 立即写入单局记录到 Supabase
+    try {
+        const saveRound = window.saveGameRound;
+        if (typeof saveRound === 'function') {
+            const userId = window.authManager?.currentUser?.id || null;
+            const candidates = pool.filter(op => hints.slice(0, currentHintIndex + 1).every(h => matchHint(op, h))).length;
+            const round = {
+                correct: !!correct,
+                hints_used: currentHintIndex + 1,
+                candidates,
+                answer_name: answer?.name || null
+            };
+            saveRound(userId, round).then(res => {
+                if (res && res.error) console.error('saveGameRound 返回错误', res.error);
+            }).catch(e => console.error('saveGameRound 异常', e));
+        }
+    } catch (e) {
+        console.error('尝试保存单局记录时出错', e);
+    }
+
     /* 高亮 */
     document.querySelectorAll('.operator-card').forEach((c, i) => {
         if (pool[i] === answer) c.classList.add('correct');
@@ -583,25 +603,7 @@ function submitAnswer() {
     nextHintBtn.disabled = true;
     submitBtn.disabled = true;
 
-    // 保存到 Supabase（若已初始化）
-    try {
-        const saveFn = window.saveGameHistory;
-        if (typeof saveFn === 'function') {
-            const userId = window.authManager?.currentUser?.id || null;
-            const stats = {
-                attempts: totalGames,
-                correct_count: winGames,
-                accuracy: totalGames ? (winGames / totalGames) : 0,
-                avg_hints_correct: winGames ? (hintsUsedForCorrect / winGames) : 0
-            };
-            // 不等待结果：异步保存，不阻塞 UI
-            saveFn(userId, stats).then(res => {
-                if (res && res.error) console.error('保存游戏历史返回错误', res.error);
-            }).catch(err => console.error('保存游戏历史异常', err));
-        }
-    } catch (e) {
-        console.error('尝试保存游戏历史时发生错误', e);
-    }
+    // 已改为每次提交写入单局记录（saveGameRound），避免重复写入汇总记录
 }
 
 /* ========================== 绑定事件 ========================== */

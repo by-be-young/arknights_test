@@ -70,3 +70,40 @@ async function saveGameHistory(userId, stats) {
 }
 
 window.saveGameHistory = saveGameHistory;
+
+// 保存单局游戏记录（每次提交时调用）
+async function saveGameRound(userId, round) {
+    try {
+        const sb = window.getSupabase();
+        if (!sb) {
+            console.warn('Supabase 客户端未就绪，无法保存单局记录');
+            return null;
+        }
+
+        // round: { correct: boolean, hints_used: number, candidates: number, answer_name: string }
+        const payload = {
+            user_id: userId || null,
+            attempts: 1,
+            correct_count: round.correct ? 1 : 0,
+            accuracy: round.correct ? 1 : 0,
+            avg_hints_correct: round.correct ? (round.hints_used || 0) : 0,
+            hints_used: round.hints_used || 0,
+            candidates: round.candidates || null,
+            answer_name: round.answer_name || null,
+            created_at: new Date().toISOString()
+        };
+
+        const { data, error } = await sb.from('game_history').insert([payload]);
+        if (error) {
+            console.error('保存单局游戏到 Supabase 失败：', error);
+            return { error };
+        }
+        console.log('已保存单局游戏到 Supabase', data);
+        return { data };
+    } catch (err) {
+        console.error('保存单局游戏发生异常：', err);
+        return { error: err };
+    }
+}
+
+window.saveGameRound = saveGameRound;

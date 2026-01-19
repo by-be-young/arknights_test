@@ -540,6 +540,30 @@ function submitAnswer() {
         hintsUsedForCorrect += currentHintIndex + 1;
     }
 
+    // 立即写入单局记录到 Supabase
+    try {
+        const saveRound = window.saveGameRound;
+        if (typeof saveRound === 'function') {
+            const userId = window.authManager?.currentUser?.id || null;
+            const candidates = pool.filter(op => hints.slice(0, currentHintIndex + 1).every(h => matchHint(op, h))).length;
+            const round = {
+                correct: !!correct,
+                hints_used: currentHintIndex + 1,
+                candidates,
+                answer_name: answer?.name || null
+            };
+            saveRound(userId, round).then(res => {
+                if (res && res.error) console.error('saveGameRound 返回错误', res.error);
+                else {
+                    // 保存成功后刷新用户历史统计显示
+                    setTimeout(() => loadUserStats(), 200);
+                }
+            }).catch(e => console.error('saveGameRound 异常', e));
+        }
+    } catch (e) {
+        console.error('尝试保存单局记录时出错', e);
+    }
+
     /* 高亮 */
     document.querySelectorAll('.operator-card').forEach((c, i) => {
         if (pool[i] === answer) c.classList.add('correct');
@@ -581,24 +605,7 @@ function submitAnswer() {
     nextHintBtn.disabled = true;
     submitBtn.disabled = true;
 
-    // 异步保存到 Supabase（若可用）
-    try {
-        const saveFn = window.saveGameHistory;
-        if (typeof saveFn === 'function') {
-            const userId = window.authManager?.currentUser?.id || null;
-            const stats = {
-                attempts: totalGames,
-                correct_count: winGames,
-                accuracy: totalGames ? (winGames / totalGames) : 0,
-                avg_hints_correct: winGames ? (hintsUsedForCorrect / winGames) : 0
-            };
-            saveFn(userId, stats).then(res => {
-                if (res && res.error) console.error('保存游戏历史返回错误', res.error);
-            }).catch(err => console.error('保存游戏历史异常', err));
-        }
-    } catch (e) {
-        console.error('尝试保存游戏历史时发生错误', e);
-    }
+    // 已改为每次提交写入单局记录（saveGameRound），避免重复写入汇总记录
 }
 
 /* ========================== 绑定事件 ========================== */
@@ -615,4 +622,42 @@ if (showAllHintsBtn) showAllHintsBtn.addEventListener('click', () => {
 /* ========================== 入口 ========================== */
 window.addEventListener('DOMContentLoaded', () => {
     loadOperators();
+    // 延迟加载用户历史统计（确保 supabase 与 auth 初始化）
+    setTimeout(() => {
+        loadUserStats();
+    }, 300);
 });
+
+// 加载并显示当前用户的历史统计（来自 Supabase）
+async function loadUserStats() {
+    try {
+        const sb = window.getSupabase();
+        const userId = window.authManager?.currentUser?.id || null;
+        if (!sb || !userId) {
+            // 未登录或 supabase 未就绪，显示会话统计或 0
+            winRateEl.textContent = totalGames ? Math.round((winGames / totalGames) * 100) + '%' : '0%';
+            avgHintsEl.textContent = winGames ? (hintsUsedForCorrect / winGames).toFixed(1) : '0';
+            return;
+        }
+
+        const { data, error } = await sb.from('game_history').select('attempts, correct_count, hints_used').eq('user_id', userId);
+        if (error) {
+            console.error('加载用户历史统计失败', error);
+            return;
+        }
+        if (!data || data.length === 0) {
+            winRateEl.textContent = '0%';
+            avgHintsEl.textContent = '0';
+            return;
+        }
+        const totalAttempts = data.reduce((s, r) => s + (r.attempts || 0), 0);
+        const totalCorrect = data.reduce((s, r) => s + (r.correct_count || 0), 0);
+        const correctRows = data.filter(r => r.correct_count && r.hints_used !== null && r.hints_used !== undefined);
+        const avgHints = correctRows.length ? (correctRows.reduce((s, r) => s + (r.hints_used || 0), 0) / correctRows.length) : 0;
+
+        winRateEl.textContent = totalAttempts ? Math.round((totalCorrect / totalAttempts) * 100) + '%' : '0%';
+        avgHintsEl.textContent = avgHints ? avgHints.toFixed(1) : '0';
+    } catch (e) {
+        console.error('loadUserStats 异常', e);
+    }
+}

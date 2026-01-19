@@ -41,6 +41,13 @@ new Vue({
 
         searchKeyword: '',
         searchResults: [],
+        // 全服游戏统计（用于 SPA 游戏首页）
+        globalGameStats: {
+            totalAttempts: 0,
+            globalAccuracy: 0,
+            globalAvgHintsCorrect: 0,
+            topAnswer: { name: null, count: 0 }
+        },
     },
     computed: {
         hasPrevQuestion() {
@@ -297,6 +304,9 @@ new Vue({
 
             if (page === 'practice') {
                 this.updateCategories();
+            } else if (page === 'game') {
+                // 加载全服统计
+                this.loadGlobalGameStats();
             } else if (page === 'wrong') {
                 this.updateWrongCategories();
             } else if (page === 'search') {
@@ -316,6 +326,58 @@ new Vue({
             const ok = this.requireLogin({ type: 'open', url });
             if (!ok) return;
             window.open(url, '_blank');
+        },
+
+        // 打开实际游戏页面（从 SPA 游戏主页或按钮），需登录
+        startGameFromSPA() {
+            const ok = this.requireLogin({ type: 'navigate', url: 'game.html' });
+            if (!ok) return;
+            window.location.href = 'game.html';
+        },
+
+        // 拉取全服游戏统计数据
+        async loadGlobalGameStats() {
+            try {
+                const sb = window.getSupabase();
+                if (!sb) return;
+                // 拉取必要字段
+                const { data, error } = await sb.from('game_history').select('attempts, correct_count, hints_used, answer_name');
+                if (error) {
+                    console.error('加载全服游戏统计失败', error);
+                    return;
+                }
+                if (!data || data.length === 0) {
+                    this.globalGameStats = { totalAttempts: 0, globalAccuracy: 0, globalAvgHintsCorrect: 0, topAnswer: { name: null, count: 0 } };
+                    return;
+                }
+                const totalAttempts = data.reduce((s, r) => s + (r.attempts || 0), 0);
+                const totalCorrect = data.reduce((s, r) => s + (r.correct_count || 0), 0);
+                // 计算全服在答对时的平均提示数：仅统计正确的行的 hints_used
+                const correctRows = data.filter(r => r.correct_count && r.hints_used !== null && r.hints_used !== undefined);
+                const avgHints = correctRows.length ? (correctRows.reduce((s, r) => s + (r.hints_used || 0), 0) / correctRows.length) : 0;
+
+                // 计算被答对最多的答案
+                const answerCounts = {};
+                data.forEach(r => {
+                    if (r.correct_count && r.answer_name) {
+                        answerCounts[r.answer_name] = (answerCounts[r.answer_name] || 0) + r.correct_count;
+                    }
+                });
+                let topName = null, topCount = 0;
+                Object.keys(answerCounts).forEach(name => {
+                    if (answerCounts[name] > topCount) {
+                        topCount = answerCounts[name];
+                        topName = name;
+                    }
+                });
+
+                this.globalGameStats.totalAttempts = totalAttempts;
+                this.globalGameStats.globalAccuracy = totalAttempts ? (totalCorrect / totalAttempts) : 0;
+                this.globalGameStats.globalAvgHintsCorrect = avgHints;
+                this.globalGameStats.topAnswer = { name: topName, count: topCount };
+            } catch (e) {
+                console.error('loadGlobalGameStats 异常', e);
+            }
         },
 
         // 获取题目统计信息
