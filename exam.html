@@ -49,6 +49,8 @@
                         </div>
 
                         <div class="question-text">
+                            <div v-if="question.background" class="question-background" v-html="question.background">
+                            </div>
                             <p v-html="question.question"></p>
                             <img v-if="question.picture" :src="'./images/' + question.id + '.png'"
                                 :alt="'题目' + question.id + '图片'" class="question-image">
@@ -224,6 +226,8 @@
                     </div>
 
                     <div class="question-text">
+                        <div v-if="currentDetailQuestion.background" class="question-background"
+                            v-html="currentDetailQuestion.background"></div>
                         <p v-html="currentDetailQuestion.question"></p>
                         <img v-if="currentDetailQuestion.picture" :src="'./images/' + currentDetailQuestion.id + '.png'"
                             :alt="'题目' + currentDetailQuestion.id + '图片'" class="question-image">

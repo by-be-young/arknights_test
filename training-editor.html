@@ -68,6 +68,12 @@
                                 <textarea v-model="question.question" rows="3"></textarea>
                             </div>
 
+                            <div class="form-group full-width">
+                                <label>背景:</label>
+                                <textarea v-model="question.background" rows="2"
+                                    placeholder="可选：简短的背景说明（不太重要）"></textarea>
+                            </div>
+
                             <div class="form-group">
                                 <label>
                                     <input type="checkbox" v-model="question.picture"> 包含图片

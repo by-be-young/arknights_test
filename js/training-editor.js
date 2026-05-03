@@ -20,7 +20,17 @@ new Vue({
             .from('training_questions')
             .select('*')
             .order('id');
-        if (!error && data) this.questions = data;
+        if (!error && data) {
+            // 将从后端来的 <br> 转回换行符，并确保 background 存在
+            this.questions = data.map(q => {
+                if (q.question) q.question = q.question.replace(/<br>/g, '\n');
+                if (q.analysis) q.analysis = q.analysis.replace(/<br>/g, '\n');
+                if (q.background) q.background = q.background.replace(/<br>/g, '\n');
+                if (q.options) q.options = q.options.map(option => option ? option.replace(/<br>/g, '\n') : '');
+                q.background = q.background || '';
+                return q;
+            });
+        }
 
         window.addEventListener('scroll', this.handleScroll, { passive: true });
     },
@@ -36,6 +46,7 @@ new Vue({
             this.questions.push({
                 id: newId,
                 question: '',
+                background: '',
                 picture: false,
                 options: ['', '', '', ''],
                 answer: 1,
@@ -84,6 +95,9 @@ new Vue({
                 if (question.question) {
                     question.question = question.question.replace(/\n/g, '<br>');
                 }
+                if (question.background) {
+                    question.background = question.background.replace(/\n/g, '<br>');
+                }
                 if (question.analysis) {
                     question.analysis = question.analysis.replace(/\n/g, '<br>');
                 }
@@ -120,6 +134,9 @@ new Vue({
                             }
                             if (question.analysis) {
                                 question.analysis = question.analysis.replace(/<br>/g, '\n');
+                            }
+                            if (question.background) {
+                                question.background = question.background.replace(/<br>/g, '\n');
                             }
                             if (question.options) {
                                 question.options = question.options.map(option =>
@@ -198,6 +215,9 @@ new Vue({
             // 将换行符转换为<br>标签
             if (questionToExport.question) {
                 questionToExport.question = questionToExport.question.replace(/\n/g, '<br>');
+            }
+            if (questionToExport.background) {
+                questionToExport.background = questionToExport.background.replace(/\n/g, '<br>');
             }
             if (questionToExport.analysis) {
                 questionToExport.analysis = questionToExport.analysis.replace(/\n/g, '<br>');

@@ -485,6 +485,16 @@ function renderAllHintsPanel() {
     });
 }
 
+function revealResultArea() {
+    if (!resultAreaEl) return;
+    resultAreaEl.classList.add('is-visible');
+    resultAreaEl.scrollTop = 0;
+    requestAnimationFrame(() => {
+        resultAreaEl.scrollTop = 0;
+        resultAreaEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+}
+
 /* ========================== 游戏流程 ========================== */
 function startGame() {
     if (allOperators.length === 0) {
@@ -498,6 +508,10 @@ function startGame() {
     selectedIndex = null;
     hints = [];
     currentHintIndex = 0;
+    if (resultAreaEl) {
+        resultAreaEl.classList.remove('is-visible');
+        resultAreaEl.scrollTop = 0;
+    }
     resultAreaEl.innerHTML = '';
 
     /* 抽取 32 名 */
@@ -594,6 +608,7 @@ function submitAnswer() {
     html += `</ul></div>`;
 
     resultAreaEl.innerHTML = html;
+    revealResultArea();
 
     /* 更新统计 */
     winRateEl.textContent = totalGames ? Math.round((winGames / totalGames) * 100) + '%' : '0%';

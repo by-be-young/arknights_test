@@ -6,40 +6,38 @@
 }
 
 :root {
-    /* 主色调 - 深蓝紫色系 */
-    --primary-color: #5E35B1;
-    --primary-dark: #4527A0;
-    --primary-light: #7E57C2;
-    --secondary-color: #26A69A;
-    --accent-color: #FF7043;
-    --success-color: #43A047;
-    --warning-color: #FFA726;
-    --wrong-color: #F44336;
+    --primary-color: rgb(253, 253, 31);
+    --primary-dark: rgb(191, 191, 24);
+    --primary-light: rgba(253, 253, 31, 0.35);
+    --secondary-color: rgba(253, 253, 31, 0.18);
+    --accent-color: rgb(253, 253, 31);
+    --success-color: rgb(158, 220, 35);
+    --warning-color: rgb(255, 192, 0);
+    --wrong-color: rgb(255, 98, 61);
+    --info-color: rgb(33, 198, 208);
+    --purple-color: rgb(127, 94, 192);
 
     /* 背景和文字色 */
-    --bg-dark: #121212;
-    --bg-card: #1E1E2E;
-    --bg-card-light: #2A2A3A;
-    --text-primary: #FFFFFF;
-    --text-secondary: #B0B0C0;
-    --text-muted: #888899;
-    --border-color: rgba(255, 255, 255, 0.1);
+    --bg-dark: #f7f7f4;
+    --bg-card: rgba(252, 252, 249, 0.98);
+    --bg-card-light: rgba(245, 245, 241, 0.98);
+    --text-primary: rgb(29, 36, 49);
+    --text-secondary: rgb(95, 102, 115);
+    --text-muted: rgb(139, 144, 143);
+    --stat-number-color: var(--warning-color);
+    --border-color: rgba(171, 143, 59, 0.16);
 
     /* 效果变量 */
     --border-radius: 12px;
     --border-radius-lg: 20px;
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+    --shadow: 0 10px 30px rgba(78, 67, 28, 0.08);
+    --shadow-lg: 0 18px 50px rgba(78, 67, 28, 0.12);
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 body {
     font-family: 'Segoe UI', 'Microsoft YaHei', Tahoma, Geneva, Verdana, sans-serif;
-    background:
-        linear-gradient(135deg, rgba(30, 30, 60, 0.9) 0%, rgba(10, 10, 30, 0.95) 100%),
-        url('../images/bg-3.png') no-repeat center center fixed;
-    background-size: cover;
-    background-attachment: fixed;
+    background: #f7f7f4;
     color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
@@ -54,7 +52,7 @@ body {
 /* 侧边导航 */
 .sidebar {
     width: 280px;
-    background: var(--bg-card);
+    background: rgb(136, 136, 136);
     box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
@@ -62,39 +60,46 @@ body {
     height: 100vh;
     z-index: 100;
     transition: var(--transition);
+    border-right: 1px solid var(--border-color);
 }
 
 .sidebar-header {
     padding: 30px 25px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.24);
     text-align: center;
 }
 
 .sidebar-header h1 {
     font-size: 1.8rem;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #ffffff;
     margin-bottom: 10px;
 }
 
 .sidebar-header p {
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.82);
     font-size: 0.9rem;
 }
 
 .nav-menu {
     flex: 1;
     padding: 20px 0;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.nav-menu::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 
 .nav-item {
     display: flex;
     align-items: center;
     padding: 18px 25px;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.9);
     text-decoration: none;
     transition: var(--transition);
     border-left: 4px solid transparent;
@@ -102,13 +107,13 @@ body {
 }
 
 .nav-item:hover {
-    background: var(--bg-card-light);
-    color: var(--text-primary);
-    border-left-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    border-left-color: var(--accent-color);
 }
 
 .nav-item.active {
-    background: var(--bg-card-light);
+    background: rgba(255, 255, 255, 0.2);
     color: var(--text-primary);
     border-left-color: var(--accent-color);
 }
@@ -126,8 +131,8 @@ body {
 
 .sidebar-footer {
     padding: 20px 25px;
-    border-top: 1px solid var(--border-color);
-    color: var(--text-muted);
+    border-top: 1px solid rgba(255, 255, 255, 0.24);
+    color: rgba(255, 255, 255, 0.8);
     font-size: 0.85rem;
     text-align: center;
 }
@@ -162,8 +167,8 @@ body {
 }
 
 .back-btn {
-    background: var(--primary-color);
-    color: white;
+    background: rgba(252, 252, 249, 0.98);
+    color: var(--text-primary);
     border: none;
     padding: 12px 24px;
     border-radius: var(--border-radius);
@@ -173,13 +178,13 @@ body {
     align-items: center;
     gap: 8px;
     transition: var(--transition);
-    box-shadow: 0 4px 12px rgba(94, 53, 177, 0.3);
+    box-shadow: 0 4px 12px rgba(171, 143, 59, 0.18);
 }
 
 .back-btn:hover {
-    background: var(--primary-dark);
+    background: rgba(245, 245, 241, 1);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(94, 53, 177, 0.4);
+    box-shadow: 0 6px 16px rgba(171, 143, 59, 0.22);
 }
 
 /* 主菜单样式 */
@@ -209,13 +214,13 @@ body {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    background: var(--accent-color);
 }
 
 .dashboard-card:hover {
     transform: translateY(-8px);
     box-shadow: var(--shadow-lg);
-    border-color: var(--primary-light);
+    border-color: rgba(171, 143, 59, 0.35);
 }
 
 .card-icon {
@@ -227,8 +232,9 @@ body {
     justify-content: center;
     margin-bottom: 20px;
     font-size: 1.8rem;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    color: white;
+    background: rgba(253, 253, 31, 0.9);
+    color: var(--primary-dark);
+    box-shadow: 0 10px 24px rgba(171, 143, 59, 0.14);
 }
 
 .card-title {
@@ -265,13 +271,13 @@ body {
 .info-item i {
     width: 24px;
     margin-right: 15px;
-    color: var(--primary-color);
+    color: var(--warning-color);
 }
 
 /* 添加题源样式 */
 .question-source {
-    background: linear-gradient(135deg, var(--secondary-color), #26C6DA);
-    color: white;
+    background: rgba(248, 248, 245, 0.98);
+    color: var(--text-primary);
     padding: 12px 20px;
     border-radius: var(--border-radius);
     margin-bottom: 25px;
@@ -279,11 +285,51 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 4px 12px rgba(38, 166, 154, 0.3);
+    box-shadow: 0 4px 12px rgba(171, 143, 59, 0.12);
 }
 
 .question-source i {
     font-size: 1rem;
+}
+
+.question-background {
+    position: relative;
+    margin-bottom: 18px;
+    padding: 14px 16px 14px 18px;
+    border-left: 4px solid var(--purple-color);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(127, 94, 192, 0.08), rgba(255, 255, 255, 0.8));
+    color: var(--text-secondary);
+    font-size: 0.98rem;
+    line-height: 1.75;
+    font-style: italic;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.question-background::before {
+    content: '“';
+    position: absolute;
+    left: 8px;
+    top: -6px;
+    font-size: 2.2rem;
+    line-height: 1;
+    color: rgba(127, 94, 192, 0.26);
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.question-background::after {
+    content: '”';
+    position: absolute;
+    right: 10px;
+    bottom: -14px;
+    font-size: 2.2rem;
+    line-height: 1;
+    color: rgba(127, 94, 192, 0.18);
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.question-background p {
+    margin: 0;
 }
 
 /* 练习选项样式 */
@@ -307,9 +353,9 @@ body {
 }
 
 .mode-option.active {
-    background: var(--primary-color);
-    color: white;
-    box-shadow: 0 4px 12px rgba(94, 53, 177, 0.3);
+    background: rgba(253, 253, 31, 0.9);
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(171, 143, 59, 0.18);
 }
 
 /* 分类样式 */
@@ -334,8 +380,8 @@ body {
 
 .category-header {
     padding: 25px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    color: white;
+    background: rgba(248, 248, 245, 0.98);
+    color: var(--text-primary);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -349,7 +395,7 @@ body {
 }
 
 .category-count {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(29, 36, 49, 0.08);
     padding: 5px 12px;
     border-radius: 20px;
     font-size: 0.9rem;
@@ -402,7 +448,7 @@ body {
 .stat-value {
     font-size: 2rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--stat-number-color);
 }
 
 .stat-label {
@@ -413,9 +459,9 @@ body {
 
 /* 删除分类按钮 */
 .delete-category-btn {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.7);
     border: none;
-    color: white;
+    color: var(--text-primary);
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -437,19 +483,19 @@ body {
     align-items: center;
     gap: 10px;
     padding: 12px 16px;
-    background: linear-gradient(135deg, var(--accent-color), #FF5722);
-    color: white;
+    background: rgba(253, 253, 31, 0.92);
+    color: var(--text-primary);
     border-radius: var(--border-radius);
     cursor: pointer;
     transition: var(--transition);
     margin-bottom: 15px;
     font-weight: 500;
-    box-shadow: 0 4px 12px rgba(255, 112, 67, 0.3);
+    box-shadow: 0 4px 12px rgba(171, 143, 59, 0.18);
 }
 
 .update-notice-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 112, 67, 0.4);
+    box-shadow: 0 6px 16px rgba(171, 143, 59, 0.24);
 }
 
 .update-notice-btn i {
@@ -463,7 +509,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(29, 36, 49, 0.28);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -488,11 +534,11 @@ body {
     align-items: center;
     padding: 25px 30px;
     border-bottom: 1px solid var(--border-color);
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: rgba(248, 248, 245, 0.98);
 }
 
 .modal-header h3 {
-    color: white;
+    color: var(--text-primary);
     font-size: 1.5rem;
     font-weight: 600;
 }
@@ -500,7 +546,7 @@ body {
 .modal-close {
     background: none;
     border: none;
-    color: white;
+    color: var(--text-primary);
     font-size: 1.5rem;
     cursor: pointer;
     width: 40px;
@@ -513,7 +559,7 @@ body {
 }
 
 .modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(171, 143, 59, 0.12);
 }
 
 /* 系统公告标签页 */
@@ -606,7 +652,7 @@ body {
 
 .version-item.active {
     background: var(--primary-color);
-    color: white;
+    color: var(--text-primary);
 }
 
 .version-number {
@@ -645,7 +691,7 @@ body {
     width: 20px;
     height: 20px;
     background: var(--wrong-color);
-    color: white;
+    color: var(--text-primary);
     border-radius: 50%;
     display: none;
     align-items: center;
@@ -680,7 +726,7 @@ body {
 }
 
 .delete-question-btn:hover {
-    background: #d32f2f;
+    background: var(--wrong-color);
     transform: scale(1.1);
 }
 
@@ -781,12 +827,12 @@ body {
 }
 
 .option:hover {
-    background: rgba(94, 53, 177, 0.1);
+    background: rgba(253, 253, 31, 0.5);
     border-color: var(--primary-color);
 }
 
 .option.selected {
-    background: rgba(94, 53, 177, 0.2);
+    background: rgba(253, 253, 31, 0.18);
     border-color: var(--primary-color);
 }
 
@@ -804,7 +850,7 @@ body {
     font-weight: 700;
     margin-right: 15px;
     min-width: 24px;
-    color: var(--primary-color);
+    color: var(--warning-color);
 }
 
 .option-text {
@@ -833,14 +879,14 @@ body {
 
 .nav-btn.primary {
     background: var(--primary-color);
-    color: white;
-    box-shadow: 0 4px 12px rgba(94, 53, 177, 0.3);
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(171, 143, 59, 0.18);
 }
 
 .nav-btn.primary:hover:not(:disabled) {
-    background: var(--primary-dark);
+    background: rgba(253, 253, 31, 0.88);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(94, 53, 177, 0.4);
+    box-shadow: 0 6px 16px rgba(171, 143, 59, 0.22);
 }
 
 .nav-btn.secondary {
@@ -850,8 +896,8 @@ body {
 }
 
 .nav-btn.secondary:hover:not(:disabled) {
-    background: var(--primary-color);
-    color: white;
+    background: rgba(253, 253, 31, 0.5);
+    color: var(--text-primary);
     transform: translateY(-2px);
 }
 
@@ -865,6 +911,46 @@ body {
     border-left: 5px solid var(--accent-color);
 }
 
+@media (min-width: 1200px) {
+
+    /* 答题页面容器 - 未显示答案时占60%宽度 */
+    .question-container {
+        max-width: 60%;
+        margin: 0 auto;
+    }
+
+    /* 显示答案时，容器占满宽度，使用flex布局 */
+    .question-container.with-answer {
+        max-width: 100%;
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    /* 标题区域始终占满整行 */
+    .question-container.with-answer .page-header {
+        flex: 1 1 100%;
+        width: 100%;
+        margin-bottom: 18px;
+    }
+
+    /* 答题卡片和答案卡片各占一半 */
+    .question-container.with-answer .question-card {
+        flex: 1 1 calc(50% - 12px);
+        max-width: calc(50% - 12px);
+        margin-bottom: 0;
+        padding: 26px;
+    }
+
+    /* 答案卡片吸顶效果 */
+    .question-container.with-answer .question-card.answer-analysis {
+        position: sticky;
+        top: 24px;
+        align-self: flex-start;
+    }
+}
+
 /* 移动端适配 */
 .mobile-menu-toggle {
     display: none;
@@ -873,7 +959,7 @@ body {
     left: 20px;
     z-index: 101;
     background: var(--primary-color);
-    color: white;
+    color: var(--text-primary);
     border: none;
     width: 50px;
     height: 50px;
@@ -920,7 +1006,7 @@ body {
 .stats-grid .stat-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--stat-number-color);
     margin-bottom: 5px;
 }
 
@@ -944,7 +1030,7 @@ body {
 .exam-stats .stat-value {
     font-size: 2rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--stat-number-color);
 }
 
 .exam-stats .stat-label {
@@ -969,7 +1055,7 @@ body {
 .auth-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(94, 53, 177, 0.2);
+    box-shadow: 0 0 0 2px rgba(253, 253, 31, 0.2);
 }
 
 .auth-btn {
@@ -981,7 +1067,7 @@ body {
 .auth-switch {
     text-align: center;
     cursor: pointer;
-    color: var(--primary-color);
+    color: var(--warning-color);
     font-weight: 500;
     margin-top: 15px;
     transition: var(--transition);
@@ -1008,7 +1094,7 @@ body {
 .jump-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(94, 53, 177, 0.2);
+    box-shadow: 0 0 0 2px rgba(253, 253, 31, 0.2);
 }
 
 .quickjump-btn {
@@ -1059,7 +1145,7 @@ body {
 .stats-grid .stat-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--stat-number-color);
     margin-bottom: 5px;
 }
 
@@ -1103,7 +1189,7 @@ body {
 .search-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.2);
+    box-shadow: 0 0 0 3px rgba(253, 253, 31, 0.2);
 }
 
 .search-icon {
@@ -1162,7 +1248,7 @@ body {
 
 .result-id {
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--warning-color);
     font-size: 1.1rem;
 }
 
@@ -1221,7 +1307,7 @@ body {
 
 .result-action-btn {
     background: var(--primary-color);
-    color: white;
+    color: var(--text-primary);
     border: none;
     padding: 8px 16px;
     border-radius: var(--border-radius);
@@ -1296,7 +1382,7 @@ body {
 }
 
 .tips-content h3 i {
-    color: var(--accent-color);
+    color: var(--warning-color);
 }
 
 .tips-grid {
@@ -1324,12 +1410,12 @@ body {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: rgba(253, 253, 31, 0.9);
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 15px;
-    color: white;
+    color: var(--text-primary);
     font-size: 1.5rem;
 }
 
@@ -1374,10 +1460,10 @@ body {
 }
 
 .keyword-example:hover {
-    background: var(--primary-color);
-    color: white;
+    background: rgba(253, 253, 31, 0.9);
+    color: var(--text-primary);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(94, 53, 177, 0.3);
+    box-shadow: 0 4px 12px rgba(171, 143, 59, 0.18);
 }
 
 
@@ -1400,7 +1486,7 @@ body {
 .exam-stats .stat-value {
     font-size: 2rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--stat-number-color);
 }
 
 .exam-stats .stat-label {

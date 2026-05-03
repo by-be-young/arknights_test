@@ -6,36 +6,38 @@
 }
 
 :root {
-    /* 主色调 - 深蓝紫色系 */
-    --primary-color: #5E35B1;
-    --primary-dark: #4527A0;
-    --primary-light: #7E57C2;
-    --secondary-color: #26A69A;
-    --accent-color: #FF7043;
-    --success-color: #43A047;
-    --warning-color: #FFA726;
-    --error-color: #F44336;
+    /* 石英白 + 淡黄科技风 */
+    --primary-color: rgb(253, 253, 31);
+    --primary-dark: rgb(191, 191, 24);
+    --primary-light: rgba(253, 253, 31, 0.35);
+    --secondary-color: rgba(253, 253, 31, 0.18);
+    --accent-color: rgb(253, 253, 31);
+    --success-color: rgb(158, 220, 35);
+    --warning-color: rgb(255, 192, 0);
+    --error-color: rgb(255, 98, 61);
+    --info-color: rgb(33, 198, 208);
+    --purple-color: rgb(127, 94, 192);
 
     /* 背景和文字色 */
-    --bg-dark: #121212;
-    --bg-card: #1E1E2E;
-    --bg-card-light: #2A2A3A;
-    --text-primary: #FFFFFF;
-    --text-secondary: #B0B0C0;
-    --text-muted: #888899;
-    --border-color: rgba(255, 255, 255, 0.1);
+    --bg-dark: #f7f4ed;
+    --bg-card: rgba(255, 255, 255, 0.88);
+    --bg-card-light: rgba(249, 245, 235, 0.96);
+    --text-primary: #1d2431;
+    --text-secondary: #5f6673;
+    --text-muted: #8b908f;
+    --border-color: rgba(171, 143, 59, 0.16);
 
     /* 效果变量 */
     --border-radius: 12px;
     --border-radius-lg: 20px;
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+    --shadow: 0 10px 30px rgba(78, 67, 28, 0.08);
+    --shadow-lg: 0 18px 50px rgba(78, 67, 28, 0.12);
     --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 body {
     font-family: 'Segoe UI', 'Microsoft YaHei', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, rgba(30, 30, 60, 0.9) 0%, rgba(10, 10, 30, 0.95) 100%);
+    background: #f3f1eb;
     background-size: cover;
     background-attachment: fixed;
     color: var(--text-primary);
@@ -49,7 +51,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 20px 30px;
-    background: var(--bg-card);
+    background: rgba(255, 255, 255, 0.92);
     box-shadow: var(--shadow);
     border-bottom: 1px solid var(--border-color);
 }
@@ -57,10 +59,7 @@ body {
 .header-left h1 {
     font-size: 1.8rem;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-primary);
     margin-bottom: 5px;
 }
 
@@ -76,10 +75,11 @@ body {
     font-size: 1.2rem;
     font-weight: 600;
     color: var(--text-primary);
-    background: var(--bg-card-light);
+    background: rgba(255, 255, 255, 0.94);
     padding: 10px 20px;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
 }
 
 /* 考试容器 */
@@ -157,6 +157,46 @@ body {
     color: var(--text-primary);
 }
 
+.question-background {
+    position: relative;
+    margin-bottom: 16px;
+    padding: 14px 16px 14px 18px;
+    border-left: 4px solid var(--purple-color);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(111, 66, 193, 0.08), rgba(255, 255, 255, 0.72));
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    font-style: italic;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.question-background::before {
+    content: '“';
+    position: absolute;
+    left: 8px;
+    top: -4px;
+    font-size: 2.2rem;
+    line-height: 1;
+    color: rgba(111, 66, 193, 0.28);
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.question-background::after {
+    content: '”';
+    position: absolute;
+    right: 10px;
+    bottom: -14px;
+    font-size: 2.2rem;
+    line-height: 1;
+    color: rgba(111, 66, 193, 0.22);
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.question-background p {
+    margin: 0;
+}
+
 .question-image {
     max-width: 100%;
     margin-top: 20px;
@@ -182,28 +222,28 @@ body {
 }
 
 .option:hover {
-    background: var(--primary-dark);
+    background: rgba(253, 253, 31, 0.5);
     transform: translateX(5px);
 }
 
 .option.selected {
-    border-color: var(--primary-color);
-    background: rgba(94, 53, 177, 0.2);
+    border-color: var(--accent-color);
+    background: rgba(253, 253, 31, 0.18);
 }
 
 .option.correct {
     border-color: var(--success-color);
-    background: rgba(67, 160, 71, 0.2);
+    background: rgb(158, 220, 35);
 }
 
 .option.wrong {
     border-color: var(--error-color);
-    background: rgba(244, 67, 54, 0.2);
+    background: rgb(255, 98, 61);
 }
 
 .option.user-selected {
-    border-color: var(--accent-color);
-    background: rgba(255, 112, 67, 0.2);
+    border-color: var(--primary-dark);
+    background: rgba(253, 253, 31, 0.28);
 }
 
 .option-label {
@@ -213,7 +253,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-card-light);
+    background: rgba(255, 255, 255, 0.92);
     margin-right: 15px;
     font-weight: 700;
     color: var(--text-secondary);
@@ -222,8 +262,8 @@ body {
 
 .option.selected .option-label,
 .option.correct .option-label {
-    background: var(--primary-color);
-    color: white;
+    background: var(--accent-color);
+    color: var(--text-primary);
 }
 
 .option.wrong .option-label {
@@ -239,7 +279,7 @@ body {
 
 .submit-btn {
     background: var(--primary-color);
-    color: white;
+    color: var(--text-primary);
     border: none;
     padding: 16px 40px;
     border-radius: var(--border-radius);
@@ -250,13 +290,13 @@ body {
     align-items: center;
     gap: 10px;
     transition: var(--transition);
-    box-shadow: 0 4px 12px rgba(94, 53, 177, 0.3);
+    box-shadow: 0 4px 12px rgba(171, 143, 59, 0.18);
 }
 
 .submit-btn:hover {
-    background: var(--primary-dark);
+    background: rgba(253, 253, 31, 0.88);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(94, 53, 177, 0.4);
+    box-shadow: 0 6px 16px rgba(171, 143, 59, 0.22);
 }
 
 /* 答题卡区域 */
@@ -300,7 +340,7 @@ body {
 }
 
 .time-remaining {
-    color: var(--accent-color);
+    color: var(--warning-color);
     font-weight: 600;
 }
 
@@ -349,8 +389,8 @@ body {
 }
 
 .question-number-item:hover {
-    background: var(--primary-dark);
-    color: white;
+    background: rgba(253, 253, 31, 0.7);
+    color: var(--text-primary);
 }
 
 .question-number-item.answered {
@@ -360,7 +400,7 @@ body {
 
 .question-number-item.current {
     border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px rgba(255, 112, 67, 0.3);
+    box-shadow: 0 0 0 2px rgba(253, 253, 31, 0.28);
 }
 
 /* 移动端答题卡按钮 */
@@ -373,7 +413,7 @@ body {
     height: 60px;
     border-radius: 50%;
     background: var(--primary-color);
-    color: white;
+    color: var(--text-primary);
     box-shadow: var(--shadow-lg);
     cursor: pointer;
     z-index: 100;
@@ -384,7 +424,7 @@ body {
 }
 
 .mobile-sheet-toggle:hover {
-    background: var(--primary-dark);
+    background: rgba(253, 253, 31, 0.88);
     transform: scale(1.1);
 }
 
@@ -476,7 +516,7 @@ body {
 }
 
 .time-remaining {
-    color: var(--accent-color);
+    color: var(--warning-color);
     font-weight: 600;
 }
 
@@ -493,7 +533,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: var(--bg-dark);
+    background: #f3f1eb;
     z-index: 300;
     overflow-y: auto;
     padding: 20px;
@@ -516,10 +556,7 @@ body {
 .result-header h1 {
     font-size: 2.5rem;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-primary);
     margin-bottom: 15px;
 }
 
@@ -550,7 +587,7 @@ body {
 .score-value {
     font-size: 3rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: var(--warning-color);
 }
 
 .score-details {
@@ -573,7 +610,7 @@ body {
 
 .section-score {
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--warning-color);
 }
 
 .question-review {
@@ -621,12 +658,12 @@ body {
 }
 
 .question-review-item.correct {
-    background: rgba(67, 160, 71, 0.2);
+    background: rgb(158, 220, 35);
     border-left: 4px solid var(--success-color);
 }
 
 .question-review-item.incorrect {
-    background: rgba(244, 67, 54, 0.2);
+    background: rgb(255, 98, 61);
     border-left: 4px solid var(--error-color);
 }
 
@@ -666,14 +703,14 @@ body {
 
 .action-btn.primary {
     background: var(--primary-color);
-    color: white;
-    box-shadow: 0 4px 12px rgba(94, 53, 177, 0.3);
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(171, 143, 59, 0.18);
 }
 
 .action-btn.primary:hover {
-    background: var(--primary-dark);
+    background: rgba(253, 253, 31, 0.88);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(94, 53, 177, 0.4);
+    box-shadow: 0 6px 16px rgba(171, 143, 59, 0.22);
 }
 
 .action-btn.secondary {
@@ -694,7 +731,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(29, 36, 49, 0.28);
     z-index: 400;
     display: flex;
     align-items: center;
@@ -741,11 +778,50 @@ body {
 }
 
 .close-modal:hover {
-    background: var(--bg-card-light);
+    background: rgba(171, 143, 59, 0.12);
 }
 
 .modal-body {
     padding: 30px;
+}
+
+@media (min-width: 1200px) {
+    .modal-content {
+        max-width: 1180px;
+    }
+
+    .modal-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+        gap: 28px 34px;
+        align-items: start;
+    }
+
+    .modal-body>.question-meta {
+        grid-column: 1 / 2;
+        margin-bottom: 0;
+    }
+
+    .modal-body>.question-text {
+        grid-column: 1 / 2;
+        margin-bottom: 0;
+    }
+
+    .modal-body>.options-container {
+        grid-column: 1 / 2;
+    }
+
+    .modal-body>.answer-analysis {
+        grid-column: 2 / 3;
+        grid-row: 1 / span 3;
+        margin-top: 0;
+        padding-top: 0;
+        padding-left: 20px;
+        border-top: none;
+        border-left: 4px solid var(--primary-color);
+        position: sticky;
+        top: 24px;
+    }
 }
 
 .answer-analysis {
@@ -777,7 +853,7 @@ body {
 .user-answer {
     margin-top: 10px;
     font-weight: 600;
-    color: var(--accent-color);
+    color: var(--warning-color);
 }
 
 /* 滚动条样式 */

@@ -7,6 +7,14 @@ new Vue({
         syncing: false,
         syncError: null
     },
+    computed: {
+        currentQuestion() {
+            return this.questions[this.currentQuestionIndex] || null;
+        },
+        hasQuestions() {
+            return this.questions.length > 0;
+        }
+    },
     async mounted() {
         const supabase = await this.getSupabase();
         const { data, error } = await supabase
@@ -19,16 +27,43 @@ new Vue({
             // 从 Supabase 获取数据时，将 <br> 转回 \n
             this.questions = data.map(question => this.convertFromSupabase(question));
             console.log('转换后的数据:', this.questions);
+            this.currentQuestionIndex = this.questions.length > 0 ? 0 : 0;
         } else {
             console.error('获取数据失败:', error);
         }
-
-        window.addEventListener('scroll', this.handleScroll, { passive: true });
     },
     beforeDestroy() {
-        window.removeEventListener('scroll', this.handleScroll);
     },
     methods: {
+        getTypeColor(type) {
+            const typeColors = {
+                1: 'rgb(127, 94, 192)',
+                2: 'rgb(33, 198, 208)',
+                3: 'rgb(158, 220, 35)',
+                4: 'rgb(255, 192, 0)',
+                5: 'rgb(255, 98, 61)'
+            };
+            return typeColors[type] || 'rgb(136, 136, 136)';
+        },
+
+        getDifficultyColor(difficulty) {
+            const difficultyColors = {
+                1: 'rgb(158, 220, 35)',
+                2: 'rgb(33, 198, 208)',
+                3: 'rgb(127, 94, 192)',
+                4: 'rgb(255, 192, 0)',
+                5: 'rgb(255, 98, 61)'
+            };
+            return difficultyColors[difficulty] || 'rgb(136, 136, 136)';
+        },
+
+        getColorTint(color, alpha) {
+            const match = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/i);
+            if (!match) return color;
+            const [, red, green, blue] = match;
+            return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+        },
+
         // 更新关键词数组
         updateKeywords(question) {
             if (question.keywordsInput) {
@@ -59,6 +94,9 @@ new Vue({
             if (converted.question) {
                 converted.question = converted.question.replace(/\n/g, '<br>');
             }
+            if (converted.background) {
+                converted.background = converted.background.replace(/\n/g, '<br>');
+            }
             if (converted.analysis) {
                 converted.analysis = converted.analysis.replace(/\n/g, '<br>');
             }
@@ -85,6 +123,9 @@ new Vue({
             if (converted.question) {
                 converted.question = converted.question.replace(/<br>/g, '\n');
             }
+            if (converted.background) {
+                converted.background = converted.background.replace(/<br>/g, '\n');
+            }
             if (converted.analysis) {
                 converted.analysis = converted.analysis.replace(/<br>/g, '\n');
             }
@@ -97,6 +138,9 @@ new Vue({
             // 确保 keywords 字段存在并创建输入字段
             converted.keywords = converted.keywords || [];
             converted.keywordsInput = converted.keywords.join(', ');
+
+            // 确保 background 字段存在
+            converted.background = converted.background || '';
 
             return converted;
         },
@@ -111,6 +155,7 @@ new Vue({
                 type: 1,
                 difficulty: 1,
                 resource: '',
+                background: '',
                 question: '',
                 picture: false,
                 options: ['', '', '', ''],
@@ -121,7 +166,7 @@ new Vue({
             });
 
             this.$nextTick(() => {
-                this.scrollToQuestion(this.questions.length - 1);
+                this.currentQuestionIndex = this.questions.length - 1;
             });
         },
 
@@ -133,6 +178,12 @@ new Vue({
                 // 如果删除的是当前显示的题目，更新当前索引
                 if (this.currentQuestionIndex >= index && this.currentQuestionIndex > 0) {
                     this.currentQuestionIndex--;
+                }
+
+                if (this.questions.length === 0) {
+                    this.currentQuestionIndex = 0;
+                } else if (this.currentQuestionIndex >= this.questions.length) {
+                    this.currentQuestionIndex = this.questions.length - 1;
                 }
             }
         },
@@ -205,6 +256,7 @@ new Vue({
                         this.questions = parsed.map(question =>
                             this.convertFromSupabase(question)
                         );
+                        this.currentQuestionIndex = this.questions.length > 0 ? 0 : 0;
                         this.saveQuestions();
                         alert('题目数据导入成功！');
                     } else {
@@ -227,39 +279,8 @@ new Vue({
             this.sidebarCollapsed = !this.sidebarCollapsed;
         },
 
-        scrollToQuestion(index) {
+        selectQuestion(index) {
             this.currentQuestionIndex = index;
-            const questionId = this.questions[index].id;
-            const element = document.getElementById(`question-${questionId}`);
-            if (element) {
-                const headerHeight = document.querySelector('header').offsetHeight;
-                const offsetTop = element.offsetTop - headerHeight - 20;
-                window.scrollTo({
-                    top: offsetTop,
-                    behavior: 'smooth'
-                });
-            }
-        },
-
-        handleScroll() {
-            // 找到当前最接近视口顶部的题目
-            const headerHeight = document.querySelector('header').offsetHeight;
-            const questionElements = document.querySelectorAll('.question-editor');
-
-            let closestIndex = 0;
-            let closestDistance = Infinity;
-
-            questionElements.forEach((element, index) => {
-                const rect = element.getBoundingClientRect();
-                const distance = Math.abs(rect.top - headerHeight);
-
-                if (distance < closestDistance) {
-                    closestDistance = distance;
-                    closestIndex = index;
-                }
-            });
-
-            this.currentQuestionIndex = closestIndex;
         },
 
         // 导出单个题目

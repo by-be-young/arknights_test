@@ -44,6 +44,18 @@ window.systemTips = `
 // 更新公告数据
 window.updateNotices = [
     {
+        "id": 6,
+        "number": "v3.1",
+        "date": "2026-05-03",
+        "title": "UI优化",
+        "content": `
+            <ul>
+                <li><strong>终末地风格配色：</strong>主题色调改为终末地黄白风格，难度分级标志色改为终末地稀有度同款色系。</li>
+                <li><strong>答案显示优化：</strong>现在答案将在题干右侧显示，方便用户对照查看。移动端下保留原本上下结构。</li>
+            </ul>
+        `
+    },
+    {
         "id": 5,
         "number": "v3.0",
         "date": "2026-01-19",

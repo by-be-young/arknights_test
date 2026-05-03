@@ -144,6 +144,7 @@ new Vue({
                     this.sidebarOpen = false;
                 }
             });
+
             // 监听登录后的重定向标记（当用户在弹窗登录成功后，会设置 window._postAuthRedirect）
             setInterval(() => {
                 try {
@@ -175,6 +176,41 @@ new Vue({
                     // ignore
                 }
             }, 500);
+
+            // ========== 新增：解析 URL 参数，自动跳转到指定题目 ==========
+            const urlParams = new URLSearchParams(window.location.search);
+            const questionParam = urlParams.get('question');
+
+            if (questionParam) {
+                // 延迟执行，确保数据已完全加载
+                setTimeout(() => {
+                    if (questionParam.toString().toUpperCase().startsWith('G')) {
+                        const trainingId = parseInt(questionParam.substring(1));
+                        if (!isNaN(trainingId)) {
+                            this.goToTrainingQuestion(trainingId);
+                        }
+                    } else {
+                        const normalId = parseInt(questionParam);
+                        if (!isNaN(normalId)) {
+                            this.goToQuestion(normalId, 'practice');
+                        }
+                    }
+                }, 300);
+            }
+
+            // 监听浏览器前进后退
+            window.addEventListener('popstate', () => {
+                const newParams = new URLSearchParams(window.location.search);
+                const newQuestion = newParams.get('question');
+                if (!newQuestion) {
+                    // 如果 URL 没有参数，返回上一页
+                    if (this.currentPage === 'question') {
+                        this.goBackFromQuestion();
+                    }
+                }
+            });
+            // ========== 新增结束 ==========
+
         } catch (error) {
             console.error('应用初始化失败:', error);
         }
@@ -245,6 +281,7 @@ new Vue({
                     typeText: this.getTypeText(question.type),
                     difficultyText: this.getDifficultyText(question.difficulty),
                     resource: question.resource || '',
+                    background: this.fmtQuestion(question.background || ''),
                     question: this.fmtQuestion(question.question),
                     options: question.options ? question.options.map(opt => opt || '') : ['', '', '', ''],
                     analysis: this.fmtQuestion(question.analysis)
@@ -261,6 +298,8 @@ new Vue({
                 this.currentPage = 'question';
                 this.selectedOption = null;
                 this.showAnswer = false;
+
+                window.history.pushState({}, '', `?question=${questionId}`);
             }
         },
 
@@ -530,6 +569,7 @@ new Vue({
                 this.trainingQuestions = rawData.map(item => ({
                     id: item.id,
                     question: item.question,
+                    background: item.background || '',
                     options: item.options || ['', '', '', ''],
                     answer: item.answer,
                     analysis: item.analysis,
@@ -564,6 +604,7 @@ new Vue({
                     typeText: '入职培训',
                     difficultyText: '入门',
                     resource: question.resource || '',
+                    background: this.fmtQuestion(question.background || ''),
                     question: this.fmtQuestion(question.question),
                     options: question.options ? question.options.map(opt => opt || '') : ['', '', '', ''],
                     analysis: this.fmtQuestion(question.analysis),
@@ -572,6 +613,8 @@ new Vue({
                 this.currentPage = 'question';
                 this.selectedOption = null;
                 this.showAnswer = false;
+                window.history.pushState({}, '', `?question=G${id}`);
+
                 console.log('成功加载题目:', this.currentQuestion);
             } else {
                 console.error('未找到培训题目:', id, '可用题目ID:', this.trainingQuestions.map(q => q.id));
@@ -591,6 +634,7 @@ new Vue({
                     typeText: this.getTypeText(question.type),
                     difficultyText: this.getDifficultyText(question.difficulty),
                     resource: question.resource || '',
+                    background: this.fmtQuestion(question.background || ''),
                     question: this.fmtQuestion(question.question),
                     options: question.options ? question.options.map(opt => opt || '') : ['', '', '', ''],
                     analysis: this.fmtQuestion(question.analysis)
@@ -625,30 +669,30 @@ new Vue({
 
         getTypeColor(type) {
             const typeColors = {
-                1: '#E91E63', // 干员调配 - 粉色
-                2: '#9C27B0', // 空间部署 - 深紫
-                3: '#3F51B5', // 效能审计 - 靛蓝
-                4: '#009688', // 横向分析 - 青绿
-                5: '#FF5722'  // 作战环境 - 深橙
+                1: 'rgb(127, 94, 192)', // 类型1 -> 紫色
+                2: 'rgb(33, 198, 208)',  // 类型2 -> 蓝色
+                3: 'rgb(158, 220, 35)',  // 类型3 -> 绿色
+                4: 'rgb(255, 192, 0)',   // 类型4 -> 橙色
+                5: 'rgb(255, 98, 61)'    // 类型5 -> 红色
             };
             return typeColors[type] || '#666';
         },
 
         getDifficultyColor(difficulty) {
             const difficultyColors = {
-                1: '#43A047', // 常识 - 绿色
-                2: '#7E57C2', // 基操 - 紫色
-                3: '#2196F3', // 娴熟 - 蓝色
-                4: '#FF9800', // 明智 - 橙色
-                5: '#F44336'  // 深邃 - 红色
+                1: 'rgb(158, 220, 35)', // 简单 - 绿色
+                2: 'rgb(33, 198, 208)',  // 较易 - 蓝色
+                3: 'rgb(127, 94, 192)',  // 中等 - 紫色
+                4: 'rgb(255, 192, 0)',   // 较难 - 橙色
+                5: 'rgb(255, 98, 61)'    // 困难 - 红色
             };
             return difficultyColors[difficulty] || '#666';
         },
 
         getTrainingQuestionColor(id) {
             const record = this.trainingRecords[id];
-            if (!record) return '#666'; // 未做 - 灰色
-            return record.correct ? '#43A047' : '#F44336'; // 正确 - 绿色，错误 - 红色
+            if (!record) return 'rgb(136, 136, 136)'; // 未做 - 指定灰色
+            return record.correct ? 'rgb(158, 220, 35)' : 'rgb(255, 98, 61)'; // 正确 - 新绿，错误 - 新红
         },
 
         selectOption(option) {
@@ -886,6 +930,8 @@ new Vue({
         },
 
         goBackFromQuestion() {
+            window.history.pushState({}, '', window.location.pathname);
+
             if (this.questionMode === 'practice') {
                 this.currentPage = 'practice';
             } else if (this.questionMode === 'random') {

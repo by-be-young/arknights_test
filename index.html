@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>博士业务能力考核</title>
+    <title>明日方舟-博士业务能力考核</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase -->
@@ -26,7 +26,7 @@
         <div class="sidebar" :class="{ active: sidebarOpen }">
             <div class="sidebar-header">
                 <h1>博士考核系统</h1>
-                <p>业务能力评估平台</p>
+                <p>你是合格的博士嘛？</p>
             </div>
 
             <div class="nav-menu">
@@ -73,7 +73,7 @@
                 <div class="update-notice-btn" @click="showSystemNotice = true">
                     <i class="fas fa-bullhorn"></i><span>系统公告</span>
                 </div>
-                <p>博士考核系统 v2.0</p>
+                <p>博士考核系统 v3.1</p>
                 <p>© 2025 罗德岛制药</p>
             </div>
         </div>
@@ -85,7 +85,7 @@
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">博士业务能力考核</h1>
-                        <p class="page-subtitle">欢迎回来，博士。请选择您要进行的考核类型。</p>
+                        <p class="page-subtitle">欢迎回来，博士。</p>
                     </div>
                     <!-- 登录弹窗 -->
                     <div v-if="showAuthModal" class="modal-overlay" @click="showAuthModal = false">
@@ -97,7 +97,8 @@
                             </div>
                             <div style="padding: 30px;">
                                 <input type="text" v-model="authUsername" placeholder="请输入用户名" class="auth-input">
-                                <input type="password" v-model="authPassword" placeholder="请输入密码" class="auth-input">
+                                <input type="password" v-model="authPassword" placeholder="密码（建议123456，请不要用惯用密码！）"
+                                    class="auth-input">
                                 <button @click="authMode === 'login' ? handleLogin() : handleRegister()"
                                     class="nav-btn primary auth-btn">
                                     <i :class="authMode === 'login' ? 'fas fa-sign-in-alt' : 'fas fa-user-plus'"></i>
@@ -482,7 +483,7 @@
             </div>
 
             <!-- 答题页面 -->
-            <div v-if="currentPage === 'question'" class="question-container">
+            <div v-if="currentPage === 'question'" class="question-container" :class="{ 'with-answer': showAnswer }">
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">答题</h1>
@@ -504,6 +505,8 @@
                     <div class="question-source" v-if="currentQuestion.resource">
                         <i class="fas fa-map-marker-alt"></i> 题源: {{ currentQuestion.resource }}
                     </div>
+                    <div class="question-background" v-if="currentQuestion.background"
+                        v-html="currentQuestion.background"></div>
                     <div class="question-text">
                         <p v-html="currentQuestion.question"></p>
                         <img v-if="currentQuestion.picture"
