@@ -7,10 +7,10 @@
 
 :root {
     /* 石英白 + 淡黄科技风 */
-    --primary-color: rgb(253, 253, 31);
-    --primary-dark: rgb(191, 191, 24);
-    --primary-light: rgba(253, 253, 31, 0.35);
-    --secondary-color: rgba(253, 253, 31, 0.18);
+    --primary-color: rgb(255, 245, 104);
+    --primary-dark: rgb(198, 191, 81);
+    --primary-light: rgba(255, 245, 104, 0.35);
+    --secondary-color: rgba(255, 245, 104, 0.18);
     --accent-color: rgb(253, 253, 31);
     --success-color: rgb(158, 220, 35);
     --warning-color: rgb(255, 192, 0);

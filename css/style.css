@@ -6,10 +6,10 @@
 }
 
 :root {
-    --primary-color: rgb(253, 253, 31);
-    --primary-dark: rgb(191, 191, 24);
-    --primary-light: rgba(253, 253, 31, 0.35);
-    --secondary-color: rgba(253, 253, 31, 0.18);
+    --primary-color: rgb(255, 245, 104);
+    --primary-dark: rgb(198, 191, 81);
+    --primary-light: rgba(255, 245, 104, 0.35);
+    --secondary-color: rgba(255, 245, 104, 0.18);
     --accent-color: rgb(253, 253, 31);
     --success-color: rgb(158, 220, 35);
     --warning-color: rgb(255, 192, 0);
@@ -232,7 +232,7 @@ body {
     justify-content: center;
     margin-bottom: 20px;
     font-size: 1.8rem;
-    background: rgba(253, 253, 31, 0.9);
+    background: rgba(255, 245, 104, 0.9);
     color: var(--primary-dark);
     box-shadow: 0 10px 24px rgba(171, 143, 59, 0.14);
 }
@@ -353,7 +353,7 @@ body {
 }
 
 .mode-option.active {
-    background: rgba(253, 253, 31, 0.9);
+    background: rgba(255, 245, 104, 0.9);
     color: var(--text-primary);
     box-shadow: 0 4px 12px rgba(171, 143, 59, 0.18);
 }
@@ -483,7 +483,7 @@ body {
     align-items: center;
     gap: 10px;
     padding: 12px 16px;
-    background: rgba(253, 253, 31, 0.92);
+    background: rgba(255, 245, 104, 0.92);
     color: var(--text-primary);
     border-radius: var(--border-radius);
     cursor: pointer;
@@ -827,12 +827,12 @@ body {
 }
 
 .option:hover {
-    background: rgba(253, 253, 31, 0.5);
+    background: rgba(255, 245, 104, 0.5);
     border-color: var(--primary-color);
 }
 
 .option.selected {
-    background: rgba(253, 253, 31, 0.18);
+    background: rgba(255, 245, 104, 0.18);
     border-color: var(--primary-color);
 }
 
@@ -884,7 +884,7 @@ body {
 }
 
 .nav-btn.primary:hover:not(:disabled) {
-    background: rgba(253, 253, 31, 0.88);
+    background: rgba(255, 245, 104, 0.88);
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(171, 143, 59, 0.22);
 }
@@ -896,7 +896,7 @@ body {
 }
 
 .nav-btn.secondary:hover:not(:disabled) {
-    background: rgba(253, 253, 31, 0.5);
+    background: rgba(255, 245, 104, 0.5);
     color: var(--text-primary);
     transform: translateY(-2px);
 }
@@ -912,42 +912,46 @@ body {
 }
 
 @media (min-width: 1200px) {
-
-    /* 答题页面容器 - 未显示答案时占60%宽度 */
     .question-container {
-        max-width: 60%;
-        margin: 0 auto;
-    }
-
-    /* 显示答案时，容器占满宽度，使用flex布局 */
-    .question-container.with-answer {
-        max-width: 100%;
+        max-width: 1280px;
         display: flex;
         gap: 24px;
         align-items: flex-start;
         flex-wrap: wrap;
+        justify-content: center;
+        /* center when only one card */
     }
 
-    /* 标题区域始终占满整行 */
-    .question-container.with-answer .page-header {
+    /* Ensure the page header stays on its own row above the cards */
+    .question-container .page-header {
         flex: 1 1 100%;
         width: 100%;
         margin-bottom: 18px;
     }
 
-    /* 答题卡片和答案卡片各占一半 */
-    .question-container.with-answer .question-card {
-        flex: 1 1 calc(50% - 12px);
-        max-width: calc(50% - 12px);
+    .question-container .question-card {
         margin-bottom: 0;
         padding: 26px;
     }
 
-    /* 答案卡片吸顶效果 */
-    .question-container.with-answer .question-card.answer-analysis {
+    /* When answer panel is shown, force two-column equal layout */
+    .question-container.with-answer {
+        flex-wrap: nowrap;
+        justify-content: space-between;
+    }
+
+    .question-container.with-answer>.question-card {
+        flex: 1 1 0;
+        max-width: calc((100% - 24px) / 2);
+        box-sizing: border-box;
+    }
+
+    /* Keep the analysis panel sticky but same width as question card */
+    .question-container.with-answer>.question-card.answer-analysis {
         position: sticky;
         top: 24px;
         align-self: flex-start;
+        margin-left: 0;
     }
 }
 
@@ -1055,7 +1059,7 @@ body {
 .auth-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(253, 253, 31, 0.2);
+    box-shadow: 0 0 0 2px rgba(255, 245, 104, 0.2);
 }
 
 .auth-btn {
@@ -1094,7 +1098,7 @@ body {
 .jump-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(253, 253, 31, 0.2);
+    box-shadow: 0 0 0 2px rgba(255, 245, 104, 0.2);
 }
 
 .quickjump-btn {
@@ -1189,7 +1193,7 @@ body {
 .search-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(253, 253, 31, 0.2);
+    box-shadow: 0 0 0 3px rgba(255, 245, 104, 0.2);
 }
 
 .search-icon {
@@ -1410,7 +1414,7 @@ body {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: rgba(253, 253, 31, 0.9);
+    background: rgba(255, 245, 104, 0.9);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1460,7 +1464,7 @@ body {
 }
 
 .keyword-example:hover {
-    background: rgba(253, 253, 31, 0.9);
+    background: rgba(255, 245, 104, 0.9);
     color: var(--text-primary);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(171, 143, 59, 0.18);
